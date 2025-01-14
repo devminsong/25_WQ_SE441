@@ -7,6 +7,7 @@
 
 <img src="hw1_cit_1.jpg">
 > Citation: Lecture materials, page 16.
+
 * Key Components of CD
 * Benefits of CD
 * Why is Increased Release Frequency Important?
@@ -17,6 +18,7 @@
 
 <img src="hw1_cit_2.jpg">
 > Citation: Lecture materials, page 23.
+
 * Historical Context
 * Core Principles
 * Benefits of DevOps
@@ -28,6 +30,7 @@
 
 <img src="hw1_cit_3.jpg">
 > Citation: Lecture materials, page 33.
+
 * Introduction to Git
 * Commit Message
 * Branching and Tagging
