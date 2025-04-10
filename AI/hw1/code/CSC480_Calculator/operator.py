@@ -25,31 +25,30 @@ class Operator(OperatorTreeElement):
         #       - self._value == "-" ?
         #       - self._value == "/" ?
 
-        # 먼저 모든 자식 노드를 평가합니다
-        operand_values = [child.evaluate() for child in self.__children]
-        
-        # 연산자에 따라 적절한 연산을 수행합니다
-        if self._value == "+":
-            return operand_values[0] + operand_values[1]
-        elif self._value == "-":
-            return operand_values[0] - operand_values[1]
-        elif self._value == "*":
-            return operand_values[0] * operand_values[1]
-        elif self._value == "/":
-            # 0으로 나누기 체크
-            if operand_values[1] == 0:
-                raise ValueError("Division by zero")
-            return operand_values[0] / operand_values[1]
-        else:
-            raise ValueError(f"Unknown operator: {self._value}")
+        a = self.__children[0].evaluate()
+        b = self.__children[1].evaluate()
+
+        return eval(f"{a} {self.get_value()} {b}")
+
+        # if self.get_value() == "+":
+        #     return a + b
+        # elif self.get_value() == "-":
+        #     return a - b
+        # elif self.get_value() == "*":
+        #     return a * b
+        # elif self.get_value() == "/":
+        #     return a / b 
+        # else:
+        #     raise ValueError(f"Invalid operator for {Operator.__name__}: {self.get_value()}")
 
     def post_order_list(self, out_list):
         # Overrides the post_order_list function from parent class.
         # TODO: Should add itself and its children ... all in post-order
         # hint: recursion is needed
+
         for child in self.__children:
             child.post_order_list(out_list)
-        out_list.append(self._value)
+        out_list.append(self.get_value())
 
     @staticmethod
     def BuildFromJSON(json_data):
@@ -60,19 +59,32 @@ class Operator(OperatorTreeElement):
         #  This function assumes that json_data contains the info for an Operator Node
         #     and all of its children, and children of its children, etc.
 
-        if json_data["type"] == "operator":
-            value = json_data["value"]
-            operands = json_data.get("operands", [])
-            children = []
-            for operand in operands:
-                type = operand.get("type")
-                if type == "number":
-                    children.append(Operand.BuildFromJSON(operand))
-                elif type == "operator":
-                    children.append(Operator.BuildFromJSON(operand))
-                else:
-                    raise ValueError(f"Unknown child type: {type} in operator {value}")
-            return Operator(value, children)
-        else:
-            raise ValueError(f"Invalid JSON data for Operator: {json_data}")
+        type_ = json_data.get("type")
+        if not isinstance(type_, str):
+            raise TypeError(f"Invalid json_data type for {Operator.__name__}: {type_}")
+        if type_ != "operator":
+            raise ValueError(f"Invalid json_data type for {Operator.__name__}: {type_}")
 
+        value = json_data.get("value")
+        if not isinstance(value, str):
+            raise TypeError(f"Invalid json_data type for {Operator.__name__}: {value}")
+        if (value != "+" and value != "-" and value != "*" and value != "/"):
+            raise ValueError(f"Invalid json_data value for {Operator.__name__}: {value}")
+
+        operands = json_data.get("operands")
+        if not isinstance(operands, list):
+            raise TypeError(f"Invalid operands list for {Operator.__name__}: {operands}")
+
+        children = []
+        for operand in operands:
+            type_ = operand.get("type")
+            if not isinstance(type_, str):
+                raise TypeError(f"Invalid json_data type for {Operator.__name__}: {type_}")
+            if type_ == "number":
+                children.append(Operand.BuildFromJSON(operand))
+            elif type_ == "operator":
+                children.append(Operator.BuildFromJSON(operand))
+            else:
+                raise ValueError(f"Invalid json_data value for {Operator.__name__}: {type_}")
+
+        return Operator(value, children) 

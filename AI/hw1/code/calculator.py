@@ -38,22 +38,25 @@ def stack_based_evaluation(post_order):
     for item in post_order:
         if isinstance(item, (int, float)):
             stack.append(item)
-        elif item in ["+", "-", "*", "/"]:
+        elif (item == "+" or item == "-" or item == "*" or item == "/"):
             if len(stack) < 2:
-                raise ValueError("Not enough operands for operator: {}".format(item))
+                raise ValueError("len(stack) < 2")
+
             b = stack.pop()
             a = stack.pop()
-            if item == "+":
-                result = a + b
-            elif item == "-":
-                result = a - b
-            elif item == "*":
-                result = a * b
-            elif item == "/":
-                if b == 0:
-                    raise ZeroDivisionError("Division by zero")
-                result = a / b
-            stack.append(result)
+
+            # if item == "+":
+            #     res = a + b
+            # elif item == "-":
+            #     res = a - b
+            # elif item == "*":
+            #     res = a * b
+            # elif item == "/":
+            #     res = a / b
+
+            res = eval(f"{a} {item} {b}")
+
+            stack.append(res)
         else:
             raise ValueError("Unknown element in post-order list: {}".format(item))
 
@@ -94,19 +97,19 @@ def main():
 
         # Step 3
         # TODO: Evaluate the expression (using the evaluate function of the OperatorTree class)
-        result_from_tree = operator_tree.evaluate()
-        print(f"The result of the expression (from tree evaluation) is: {result_from_tree}")
+        evaluation = operator_tree.evaluate()
+        print(f"Evaluation: {evaluation}")
 
         # Step 4
         # TODO: Generate a list of the elements on the Operator Tree in post-order and print it!
-        post_order_representation = operator_tree.post_order_list()
-        print(f"Post-order representation: {post_order_representation}")
+        post_order_list = operator_tree.post_order_list()
+        print(f"Post order list: {post_order_list}")
 
         # Step 5
         # TODO: Evaluate the expression (again) but using the post fix notation and a stack
         #       This must be done by calling stack_based_evaluation
-        result_from_postfix = stack_based_evaluation(post_order_representation)
-        print(f"The result of the expression (from postfix evaluation) is: {result_from_postfix}")
+        evaluation = stack_based_evaluation(post_order_list)
+        print(f"Stack based evaluation: {evaluation}")
         print(f"\n")
 
 if __name__ == "__main__":
