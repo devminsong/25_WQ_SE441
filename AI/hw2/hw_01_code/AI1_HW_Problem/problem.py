@@ -81,7 +81,7 @@ class Problem:
         all_targets_visited = all(visited_targets)
 
         # 위 두 조건이 모두 참이면 목표 상태입니다.
-        print(f'is_goal_state 확인 : {current_location} {start_location} {visited_targets}')
+        # print(f'is_goal_state 확인 : {current_location} {start_location} {visited_targets}')
         return is_at_start and all_targets_visited
 
     """

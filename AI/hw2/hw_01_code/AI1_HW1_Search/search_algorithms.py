@@ -109,8 +109,82 @@ class SearchAlgorithms:
     """
     @staticmethod
     def uniform_cost_search(problem: Problem) -> SearchResults:
-        # TODO: Your CODE HERE
-        return SearchResults(None, None, 0, 0)
+        # 시작 상태를 얻습니다 [7].
+        initial_state = problem.get_initial_state()
+        if initial_state is None:
+            return SearchResults(None, None, 0, 0)
+
+        # 시작 노드를 생성합니다. 경로 비용은 0입니다 [8].
+        start_node = SearchTreeNode(None, None, initial_state, 0)
+
+        # 목표 상태인지 확인합니다 [9].
+        if problem.is_goal_state(start_node.get_state()):
+            return SearchResults(start_node.path_to_root(), start_node.get_path_cost(), 1, 1)
+
+        # 우선순위 큐를 사용하여 frontier를 초기화하고 시작 노드를 추가합니다.
+        # 우선순위는 경로 비용입니다 [1, 4].
+        frontier = [(0, start_node)]  # (경로 비용, 노드) 튜플로 저장하여 heapq에서 우선순위를 사용하도록 합니다.
+
+        # 이미 도달한 상태와 해당 상태의 최소 비용을 저장하는 딕셔너리를 초기화합니다.
+        # (상태 표현: 최소 경로 비용) 형태입니다 [4, 10].
+        reached = {initial_state.get_representation(): 0}
+        print(f'frontier: {frontier} reached: {reached}')
+
+        # 탐색된 노드와 도달한 노드의 수를 초기화합니다.
+        nodes_explored = 0
+        nodes_reached = 1
+
+        # frontier가 비어 있지 않은 동안 탐색을 계속합니다 [4].
+        while frontier:
+            # 우선순위 큐에서 가장 낮은 경로 비용을 가진 노드를 꺼냅니다 [4, 11].
+            path_cost, current_node = heapq.heappop(frontier)
+            print("")
+            print("################ POP #################")
+            print(f'frontier에서 pop한 노드: {path_cost}, {current_node}')
+            print("################ POP #################")
+            print("")
+
+            nodes_explored += 1
+
+            # 현재 노드의 상태가 목표 상태인지 확인합니다 [4, 9].
+            if problem.is_goal_state(current_node.get_state()):
+                print(f'목표 상태를 찾았습니다 : {current_node.get_state()}')
+                return SearchResults(current_node.path_to_root(), path_cost, nodes_reached, nodes_explored)
+
+            # 현재 상태를 기반으로 가능한 자식 상태들을 생성합니다 [6, 12].
+            next_states = problem.generate_children(current_node.get_state())
+            print(f'while frontier에서 next state count : {len(next_states)}')
+
+            if next_states:
+                for next_state in next_states:
+                    print('')
+                    # 자식 상태로 이동하는 액션을 얻습니다. 이는 자식 상태의 위치입니다 [13].
+                    action = next_state.get_location()
+                    print(f'action은: {action}')
+
+                    # 부모 노드에서 자식 노드로 이동하는 비용을 계산합니다 [6, 14].
+                    cost = problem.get_action_cost(current_node.get_state(), action)
+                    # 새로운 경로 비용을 계산합니다 [6].
+                    new_path_cost = path_cost + cost
+                    # 자식 상태의 표현을 얻습니다 [15].
+                    s = next_state.get_representation()
+
+                    # 자식 상태가 아직 도달하지 않았거나, 더 낮은 비용으로 도달할 수 있는 경우 [5, 6]:
+                    if s not in reached or new_path_cost < reached[s]:
+                        nodes_reached += 1
+                        reached[s] = new_path_cost
+                        # 새로운 자식 노드를 생성합니다 [6, 8].
+                        child_node = SearchTreeNode(current_node, action, next_state, new_path_cost)
+                        # 우선순위 큐에 (새로운 경로 비용, 자식 노드) 형태로 추가합니다 [6, 11].
+                        heapq.heappush(frontier, (new_path_cost, child_node))
+                        print(f'{s} frontier.heappush 후 frontier 상태 {frontier}')
+                        print(f'{s} frontier.heappush 후 reached 상태 {reached}')
+                    else:
+                        print(f'{s}는 reached에 있으므로 추가하지 않습니다. frontirer 상태: {frontier}')
+                        print(f'{s}는 reached에 있으므로 추가하지 않습니다. reached 상태: {reached}')
+
+        # 목표 상태에 도달하지 못하면 실패를 반환합니다 [16].
+        return SearchResults(None, None, nodes_reached, nodes_explored)
 
     """
         Implementation of the A* Search algorithm. The only input
@@ -120,8 +194,91 @@ class SearchAlgorithms:
     """
     @staticmethod
     def A_start_search(problem: Problem) -> SearchResults:
-        # TODO: Your CODE HERE
-        return SearchResults(None, None, 0, 0)
+        # 시작 상태를 얻습니다 [3].
+        initial_state = problem.get_initial_state()
+        if initial_state is None:
+            return SearchResults(None, None, 0, 0)
+
+        # 시작 노드를 생성합니다. 경로 비용은 0입니다 [3].
+        start_node = SearchTreeNode(None, None, initial_state, 0)
+
+        # 목표 상태인지 확인합니다 [4].
+        if problem.is_goal_state(start_node.get_state()):
+            return SearchResults(start_node.path_to_root(), start_node.get_path_cost(), 1, 1)
+
+        # 우선순위 큐를 사용하여 frontier를 초기화하고 시작 노드를 추가합니다.
+        # 우선순위는 f(n) = g(n) + h(n) 입니다 [2].
+        start_heuristic = problem.estimate_cost_to_solution(initial_state)
+        frontier = [(start_heuristic, 0, start_node)] # (f(n), g(n), 노드) 튜플로 저장하여 heapq에서 우선순위를 사용합니다. g(n)을 포함하여 휴리스틱 값이 같을 경우 경로 비용이 낮은 노드를 먼저 탐색하도록 합니다.
+
+        # 이미 도달한 상태와 해당 상태의 최소 f(n) 값을 저장하는 딕셔너리를 초기화합니다.
+        # (상태 표현: 최소 f(n) 값) 형태입니다 [4].
+        reached = {initial_state.get_representation(): start_heuristic}
+        print(f'frontier: {frontier} reached: {reached}')
+
+        # 탐색된 노드와 도달한 노드의 수를 초기화합니다.
+        nodes_explored = 0
+        nodes_reached = 1
+
+        # frontier가 비어 있지 않은 동안 탐색을 계속합니다 [4].
+        while frontier:
+          
+            print("")
+            print("################ POP #################")
+            print(f"pop전 frontier상태 : {frontier}")
+            # 우선순위 큐에서 가장 낮은 f(n) 값을 가진 노드를 꺼냅니다 [4, 5].
+            f_cost, path_cost, current_node = heapq.heappop(frontier)
+
+            print(f'frontier에서 pop한 노드: f={f_cost}, g={path_cost}, {current_node}')
+            print("################ POP #################")
+            print("")
+
+            nodes_explored += 1
+
+            # 현재 노드의 상태가 목표 상태인지 확인합니다 [4, 6].
+            if problem.is_goal_state(current_node.get_state()):
+                print(f'목표 상태를 찾았습니다 : {current_node.get_state()}')
+                return SearchResults(current_node.path_to_root(), path_cost, nodes_reached, nodes_explored)
+
+            # 현재 상태를 기반으로 가능한 자식 상태들을 생성합니다 [6, 7].
+            next_states = problem.generate_children(current_node.get_state())
+            print(f'while frontier에서 next state count : {len(next_states)}')
+
+            if next_states:
+                for next_state in next_states:
+                    print('')
+                    # 자식 상태의 표현을 얻습니다 [8, 9].
+                    s = next_state.get_representation()
+
+                    # 부모 노드에서 자식 노드로 이동하는 action과 그 비용을 얻습니다 [10, 11].
+                    action = next_state.get_location()
+                    print(f'action은: {action}')
+
+                    cost = problem.get_action_cost(current_node.get_state(), action)
+                    new_path_cost = path_cost + cost
+
+                    # 자식 노드의 휴리스틱 값을 추정합니다 [12, 13].
+                    heuristic_cost = problem.estimate_cost_to_solution(next_state)
+                    new_f_cost = new_path_cost + heuristic_cost
+
+                    # 자식 노드를 생성합니다 [8, 14].
+                    child_node = SearchTreeNode(current_node, action, next_state, new_path_cost)
+
+                    # 만약 자식 상태가 아직 도달하지 않았거나, 현재 경로의 f(n) 값이 이전에 도달했던 f(n) 값보다 작다면 [15]:
+                    if s not in reached or new_f_cost < reached[s]:
+                        nodes_reached += 1
+                        reached[s] = new_f_cost
+                        # 우선순위 큐에 (새로운 f(n), 새로운 g(n), 자식 노드) 형태로 추가합니다 [5, 8].
+                        heapq.heappush(frontier, (new_f_cost, new_path_cost, child_node))
+                        print(f'{s} frontier.heappush 후 frontier 상태 {frontier}')
+                        print(f'{s} frontier.heappush 후 reached 상태 {reached}')
+                    else:
+                        print(f'{s}는 reached에 있으며, 현재 f(n)값{new_f_cost}보다 더 낮은 f(n)값{reached[s]}으로 이미 도달했습니다. frontier 상태: {frontier}')
+                        print(f'{s}는 reached에 있으며, 현재 f(n)값{new_f_cost}보다 더 낮은 f(n)값{reached[s]}으로 이미 도달했습니다. reached 상태: {reached}')
+
+        # 목표 상태에 도달하지 못하면 실패를 반환합니다 [8, 16].
+        print('탐색 실패')
+        return SearchResults(None, None, nodes_reached, nodes_explored)
 
     """
         Auxiliary function for printing search results 
