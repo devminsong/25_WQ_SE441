@@ -1,0 +1,41 @@
+@startuml
+
+package AI1_HW_Problem {
+
+class State
+
+class CityMap
+
+class Problem
+
+class SearchRequest
+
+Problem --o CityMap : has a
+Problem --o SearchRequest : has a
+Problem ..> State : uses
+}
+
+package AI1_HW1_Search {
+
+class SearchTreeNode
+SearchTreeNode --o AI1_HW_Problem.State : has a state
+SearchTreeNode -- SearchTreeNode : parent
+
+class SearchResults
+
+class SearchAlgorithms
+SearchAlgorithms ..> AI1_HW_Problem.Problem : uses
+SearchAlgorithms ..> SearchResults : returns
+SearchAlgorithms ..> SearchTreeNode : uses
+}
+
+package main {
+class main_py
+}
+
+main_py ..> AI1_HW_Problem.CityMap : uses
+main_py ..> AI1_HW_Problem.SearchRequest : uses
+main_py ..> AI1_HW_Problem.Problem : uses
+main_py ..> AI1_HW1_Search.SearchAlgorithms : uses
+
+@enduml

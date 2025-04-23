@@ -3,8 +3,8 @@
 #  Created by: Kenny Davila Castellanos
 #      For: CSC 480 - AI 1
 #
-#  TODO: Modified by: ???
-#  TODO: Modified When: ???
+#  TODO: Modified by: MIN SONG
+#  TODO: Modified When: 041125
 # =========================================
 
 
@@ -44,24 +44,14 @@ def stack_based_evaluation(post_order):
 
             b = stack.pop()
             a = stack.pop()
-
-            # if item == "+":
-            #     res = a + b
-            # elif item == "-":
-            #     res = a - b
-            # elif item == "*":
-            #     res = a * b
-            # elif item == "/":
-            #     res = a / b
-
             res = eval(f"{a} {item} {b}")
 
             stack.append(res)
         else:
-            raise ValueError("Unknown element in post-order list: {}".format(item))
+            raise ValueError(f"Invalid post_order value: {item}")
 
     if len(stack) != 1:
-        raise ValueError("Invalid post-order expression: {}".format(post_order))
+        raise ValueError(f"Invalid post_order value: {post_order}")
 
     return stack
 

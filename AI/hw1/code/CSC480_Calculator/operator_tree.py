@@ -3,8 +3,8 @@
 #  Created by: Kenny Davila Castellanos
 #      For: CSC 480 - AI 1
 #
-#  TODO: Modified by: ???
-#  TODO: Modified When: ???
+#  TODO: Modified by: MIN SONG
+#  TODO: Modified When: 041125
 # =========================================
 
 from .operand import Operand

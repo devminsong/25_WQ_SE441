@@ -1,0 +1,22 @@
+@startuml
+title WORK_CD
+
+Obj *-> Attribute
+AttributeFactory ..> Attribute
+ISubject <|-- PlayerInfo
+PlayerInfo *-> UIPlayerInfo
+IObserver <|-- UIPlayerInfo
+Unit --> UnitFSMInfo
+UnitObjectPool ..> Unit
+SpawnHandler ..> UnitObjectPool
+UnitFSMInfo --|> FSMInfo
+FSMInfoFactory ..> FSMInfo
+SceneHandler *-> Scene
+Scene ..> UIHandler
+UIHandler *-> UIPlayerInfo
+Supervisor *-> SceneHandler
+Supervisor *-> UIHandler
+
+abstract class FSMInfo{    
+}
+@enduml

@@ -3,8 +3,8 @@
 #  Created by: Kenny Davila Castellanos
 #      For: CSC 480 - AI 1
 #
-#  TODO: Modified by: ???
-#  TODO: Modified When: ???
+#  TODO: Modified by: MIN SONG
+#  TODO: Modified When: 041125
 # =========================================
 
 
@@ -25,21 +25,13 @@ class Operator(OperatorTreeElement):
         #       - self._value == "-" ?
         #       - self._value == "/" ?
 
+        if len(self.__children) < 2:
+            raise ValueError("len(self.__children) < 2")
+
         a = self.__children[0].evaluate()
         b = self.__children[1].evaluate()
 
         return eval(f"{a} {self.get_value()} {b}")
-
-        # if self.get_value() == "+":
-        #     return a + b
-        # elif self.get_value() == "-":
-        #     return a - b
-        # elif self.get_value() == "*":
-        #     return a * b
-        # elif self.get_value() == "/":
-        #     return a / b 
-        # else:
-        #     raise ValueError(f"Invalid operator for {Operator.__name__}: {self.get_value()}")
 
     def post_order_list(self, out_list):
         # Overrides the post_order_list function from parent class.
@@ -80,6 +72,7 @@ class Operator(OperatorTreeElement):
             type_ = operand.get("type")
             if not isinstance(type_, str):
                 raise TypeError(f"Invalid json_data type for {Operator.__name__}: {type_}")
+            
             if type_ == "number":
                 children.append(Operand.BuildFromJSON(operand))
             elif type_ == "operator":
