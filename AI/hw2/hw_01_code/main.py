@@ -47,7 +47,7 @@ def main():
 
     # TODO: Check the code for this function to understand how the map class works
     #       Afterwards, modify  or remove this line of code
-    example_using_map_class(map)
+    # example_using_map_class(map)
 
     # TODO: Check the code for this function to understand how the test case class works
     #       Afterwards, modify or remove this line of code

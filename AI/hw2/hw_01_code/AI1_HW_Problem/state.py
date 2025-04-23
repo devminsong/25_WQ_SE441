@@ -47,7 +47,15 @@ class State:
         self.__visited_targets = visited_targets
 
         # create the atomic representation ...
-        self.__atomic = current_loc + "-" + "".join([("1" if visited else "0") for visited in visited_targets])
+        # self.__atomic = current_loc + "-" + "".join([("1" if visited else "0") for visited in visited_targets])
+        binary_string = ""
+        for visited in visited_targets:
+            if visited:
+                binary_string += "1"
+            else:
+                binary_string += "0"
+
+        self.__atomic = current_loc + "-" + binary_string
         print(f'State init atomic : {self.__atomic} {visited_targets}')
 
     def get_location(self):
@@ -58,3 +66,6 @@ class State:
 
     def get_representation(self):
         return self.__atomic
+    
+    def __repr__(self):
+        return f"State(current_loc={self.__current_loc}, visited_targets={self.__visited_targets})"

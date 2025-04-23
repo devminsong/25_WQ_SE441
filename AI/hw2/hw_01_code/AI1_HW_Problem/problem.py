@@ -81,6 +81,7 @@ class Problem:
         all_targets_visited = all(visited_targets)
 
         # 위 두 조건이 모두 참이면 목표 상태입니다.
+        print(f'is_goal_state 확인 : {current_location} {start_location} {visited_targets}')
         return is_at_start and all_targets_visited
 
     """
@@ -100,73 +101,38 @@ class Problem:
             object and visited targets in the State object.  
     """
     def generate_children(self, state: State) -> List[State]:
-        print("\n--- generate_children 함수 호출 ---")
         children = []
         current_location = state.get_location()
-        is_visiteds = state.get_visited_targets()
+        visited_targets = state.get_visited_targets()
         target_locations = self.__current_case.get_targets()
-        
-        print(f"현재 위치: {current_location}")
-        print(f"현재 방문 상태: {is_visiteds}")
-        print(f"타겟 위치들: {target_locations}")
 
         # 현재 위치의 이웃 노드들을 가져옵니다.
         neighbor_locations = self.__city_map.get_neighbors(current_location)
-        print(f"이웃 위치들: {neighbor_locations}")
 
         # 각 이웃 노드에 대해 새로운 자식 상태를 생성합니다.
         for neighbor_location in neighbor_locations:
             # 새로운 자식 상태의 방문 상태 리스트를 복사합니다.
-            temp_is_visiteds = list(is_visiteds)
+            new_visited_targets = list(visited_targets)
 
             # 이웃 위치가 목표 위치 중 하나인지 확인하고, 아직 방문하지 않았다면 방문 상태를 업데이트합니다.
-            target_visited = False
             for i, target in enumerate(target_locations):
-                if neighbor_location == target and not is_visiteds[i]:
-                    temp_is_visiteds[i] = True
-                    target_visited = True
-                    print(f"  → 이웃 {neighbor_location}은 타겟이며 방문 상태 업데이트: {temp_is_visiteds}")
+                if neighbor_location == target and not visited_targets[i]:
+                    new_visited_targets[i] = True
                     break  # 하나의 목표만 방문했으므로 루프를 종료합니다.
 
             # 새로운 상태 객체를 생성합니다.
-            new_state = State(neighbor_location, temp_is_visiteds)
+            print(f'{current_location}의 이웃 노드 {neighbor_location} 생성')
+            new_state = State(neighbor_location, new_visited_targets)
             children.append(new_state)
-            
-            # 새 상태의 표현과 설명을 출력합니다
-            rep = new_state.get_representation()
-            if target_visited:
-                print(f"  → 새 자식 상태 생성: {rep} (타겟 방문)")
-            else:
-                print(f"  → 새 자식 상태 생성: {rep}")
 
-        print(f"생성된 총 자식 상태 수: {len(children)}")
+        print(f"""자식state 생성:
+              현재 state는 {current_location}이고
+              visited 상태는 {visited_targets}이고
+              target은 {target_locations}이고
+              현재 neighbor는 {neighbor_locations}이고
+              갱신된 visited는 {new_visited_targets}입니다.
+        """)
         return children
-    # def generate_children(self, state: State) -> List[State]:
-    #     children = []
-    #     current_location = state.get_location()
-    #     visited_targets = state.get_visited_targets()
-    #     target_locations = self.__current_case.get_targets()
-
-    #     # 현재 위치의 이웃 노드들을 가져옵니다.
-    #     neighbor_locations = self.__city_map.get_neighbors(current_location)
-
-    #     # 각 이웃 노드에 대해 새로운 자식 상태를 생성합니다.
-    #     for neighbor_location in neighbor_locations:
-    #         # 새로운 자식 상태의 방문 상태 리스트를 복사합니다.
-    #         new_visited_targets = list(visited_targets)
-
-    #         # 이웃 위치가 목표 위치 중 하나인지 확인하고, 아직 방문하지 않았다면 방문 상태를 업데이트합니다.
-    #         for i, target in enumerate(target_locations):
-    #             if neighbor_location == target and not visited_targets[i]:
-    #                 new_visited_targets[i] = True
-    #                 break  # 하나의 목표만 방문했으므로 루프를 종료합니다.
-
-    #         # 새로운 상태 객체를 생성합니다.
-    #         new_state = State(neighbor_location, new_visited_targets)
-    #         children.append(new_state)
-
-    #     print(f'gen child : {visited_targets} {target_locations} {neighbor_locations} {new_visited_targets}')
-    #     return children
 
     """
         Cost-Model: cost of executing the given action on the given state
