@@ -51,7 +51,6 @@ class SearchTreeNode:
         # generate a unique ID for each node
         self.__node_id = SearchTreeNode.NodeCount
         SearchTreeNode.NodeCount += 1
-        # print(f'#### 노드 생성자 parent:{parent} action:{action} state:{state} cost:{path_cost}')
 
     def get_parent(self):
         return self.__parent
@@ -88,7 +87,3 @@ class SearchTreeNode:
             current = current.__parent
 
         return full_path
-            
-    def __repr__(self):
-        # return f"노드(state={self.get_state().get_representation()}, cost={self.__node_id})"
-        return f"({self.get_state().get_representation()})"

@@ -4,7 +4,7 @@
 #  Created by: Kenny Davila Castellanos
 #              for CSC 380/480
 #
-#  MODIFIED BY: [Your NAME]
+#  MODIFIED BY: [MIN SONG]
 # ===============================================
 """
 
@@ -41,7 +41,7 @@ def example_using_map_class(map: CityMap):
 
 def main():
     # ... loading the map from JSON file ...
-    map = CityMap.FromFile("./tegucigalpa_temp.json")
+    map = CityMap.FromFile("./tegucigalpa.json")
     # ... loading the test cases from JSON file ...
     test_cases = SearchRequest.FromTestCasesFile("./test_cases.json")
 
@@ -61,10 +61,10 @@ def main():
         problem = Problem(map, test_case)
 
         # use BFS ....
-        # SearchAlgorithms.search(problem, SearchAlgorithms.BreadthFirstSearch)
+        SearchAlgorithms.search(problem, SearchAlgorithms.BreadthFirstSearch)
 
         # use UCS ....
-        # SearchAlgorithms.search(problem, SearchAlgorithms.UniformCostSearch)
+        SearchAlgorithms.search(problem, SearchAlgorithms.UniformCostSearch)
 
         # use A* ....
         SearchAlgorithms.search(problem, SearchAlgorithms.AStarSearch)
