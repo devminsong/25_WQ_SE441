@@ -180,8 +180,12 @@ class Problem:
         # 탐색 요청의 목표 지점 목록을 가져옵니다.
         targets = self.__current_case.get_targets()
         # 현재 상태에서 방문하지 않은 목표 지점들을 식별합니다.
-        pending_targets = [targets[i] for i, visited in enumerate(state.get_visited_targets()) if not visited]
-
+        # pending_targets = [targets[i] for i, visited in enumerate(state.get_visited_targets()) if not visited]
+        pending_targets = []
+        for i, visited in enumerate(state.get_visited_targets()):
+            if not visited:
+                pending_targets.append(targets[i])
+                
         # 방문해야 할 목표 지점이 없는 경우, 현재 위치에서 시작 위치로 돌아가는 직선 거리를 추정합니다.
         if not pending_targets:
             return self.__city_map.get_straight_line_distance(current_location, final_location)
