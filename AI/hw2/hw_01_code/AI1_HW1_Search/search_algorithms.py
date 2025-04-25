@@ -176,12 +176,14 @@ class SearchAlgorithms:
         print(f" --> Nodes Explored: {search_results.explored_nodes_count()}")
         print(f" --> Search Time (s): {search_time}")
 
+        return full_path
+
     """
         Auxiliary Function for running the search algorithm specified, 
         and printing the results and statistics.
     """
     @staticmethod
-    def search(problem: Problem, algorithm: int):
+    def search(problem: Problem, algorithm: int) -> tuple[SearchResults | None, float]:
         # Note: This code might look awkward, but this is intentional
         # the idea is to NOT count the print operation as part of the search time
         if algorithm == SearchAlgorithms.BreadthFirstSearch:
@@ -204,4 +206,6 @@ class SearchAlgorithms:
         end_time = time.time()
         total_time = end_time - start_time
 
-        SearchAlgorithms.print_solution_details(problem.get_current_case(), solution, total_time)
+        # SearchAlgorithms.print_solution_details(problem.get_current_case(), solution, total_time)
+
+        return solution, total_time

@@ -1,3 +1,87 @@
+' @startuml
+' package AI1_HW_Problem {
+'   class CityMap {
+'     + get_name()
+'     + get_locations()
+'     + get_neighbors()
+'     + get_cost()
+'     + get_straight_line_distance()
+'     + __compute_straight_line_distance()
+'     + FromFile()
+'   }
+'   class SearchRequest {
+'     + get_name()
+'     + get_start_location()
+'     + get_targets()
+'     + FromTestCasesFile()
+'   }
+'   class State {
+'     + get_location()
+'     + get_visited_targets()
+'     + get_representation()
+'   }
+'   class Problem {
+'     + get_city_map()
+'     + get_current_case()
+'     + get_initial_state()
+'     + is_goal_state()
+'     + generate_children()
+'     + get_action_cost()
+'     + estimate_cost_to_solution()
+'   }
+' }
+
+' package AI1_HW1_Search {
+'   class SearchTreeNode {
+'     + get_parent()
+'     + get_action()
+'     + get_state()
+'     + get_path_cost()
+'     + path_to_root()
+'   }
+'   class SearchResults {
+'     + get_solution()
+'     + get_cost()
+'     + explored_nodes_count()
+'     + reached_nodes_count()
+'   }
+'   class SearchAlgorithms {
+'     + search()
+'     + breadth_first_search()
+'     + uniform_cost_search()
+'     + A_start_search()
+'     + print_solution_details()
+'   }
+' }
+
+' package Main {
+'   class main {
+'     + main()
+'   }
+' }
+
+' Main ..> AI1_HW_Problem.CityMap : uses FromFile
+' Main ..> AI1_HW_Problem.SearchRequest : uses FromTestCasesFile
+' Main ..> AI1_HW_Problem.Problem : creates Problem
+' Main ..> AI1_HW1_Search.SearchAlgorithms : uses search
+' Main ..> AI1_HW1_Search.SearchResults : uses SearchResults
+
+' AI1_HW_Problem.Problem --o AI1_HW_Problem.CityMap : has a
+' AI1_HW_Problem.Problem --o AI1_HW_Problem.SearchRequest : has a
+' AI1_HW_Problem.Problem ..> AI1_HW_Problem.State : creates State, uses State
+
+' AI1_HW1_Search.SearchAlgorithms ..> AI1_HW_Problem.Problem : uses get_initial_state, is_goal_state, generate_children, get_action_cost, estimate_cost_to_solution
+' AI1_HW1_Search.SearchAlgorithms ..> AI1_HW1_Search.SearchResults : creates SearchResults, uses SearchResults
+' AI1_HW1_Search.SearchAlgorithms ..> AI1_HW1_Search.SearchTreeNode : creates SearchTreeNode
+' AI1_HW1_Search.SearchAlgorithms ..> AI1_HW_Problem.State : uses State, get_representation
+' AI1_HW1_Search.SearchAlgorithms ..> AI1_HW_Problem.SearchRequest : uses SearchRequest, get_start_location, get_targets
+' AI1_HW1_Search.SearchAlgorithms ..> AI1_HW1_Search.SearchTreeNode : uses get_path_cost, path_to_root
+
+' AI1_HW1_Search.SearchTreeNode --o AI1_HW1_Search.SearchTreeNode : has parent
+' AI1_HW1_Search.SearchTreeNode --o AI1_HW_Problem.State : has a
+
+' @enduml
+
 @startuml
 
 package AI1_HW_Problem {
@@ -19,7 +103,7 @@ package AI1_HW1_Search {
 
 class SearchTreeNode
 SearchTreeNode --o AI1_HW_Problem.State : has a state
-SearchTreeNode -- SearchTreeNode : parent
+' SearchTreeNode -- SearchTreeNode : parent
 
 class SearchResults
 
@@ -29,13 +113,11 @@ SearchAlgorithms ..> SearchResults : returns
 SearchAlgorithms ..> SearchTreeNode : uses
 }
 
-package main {
-class main_py
-}
+class main
 
-main_py ..> AI1_HW_Problem.CityMap : uses
-main_py ..> AI1_HW_Problem.SearchRequest : uses
-main_py ..> AI1_HW_Problem.Problem : uses
-main_py ..> AI1_HW1_Search.SearchAlgorithms : uses
+main ..> AI1_HW_Problem.CityMap : uses
+main ..> AI1_HW_Problem.SearchRequest : uses
+main ..> AI1_HW_Problem.Problem : uses
+main ..> AI1_HW1_Search.SearchAlgorithms : uses
 
 @enduml
