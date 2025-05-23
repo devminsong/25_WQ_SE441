@@ -22,70 +22,181 @@ except:
     sys.exit(1)
 
 import csv
+
 from tutorial import generate_random_policy, run_one_experiment, display_policy
 
-def part_one():
-    print("Running Part 1: Evaluating Fixed Policies")
+# ================================================================================
+# 공통 유틸리티 함수 및 상수
+# ================================================================================
 
-    # Create a FrozenLake 8x8 environment using Gymnasium
-    # Note: render_mode is not needed for evaluation runs without display=True
+def generate_env():
+    """
+    Gymnasium FrozenLake 8x8 환경을 생성합니다.
+    과제 요구사항에 따라 8x8 맵, is_slippery=True로 설정됩니다. [1, 9]
+    """
+    print("Creating FrozenLake 8x8 environment...")
+    # Note: render_mode is not needed for evaluation runs without display=True [1]
     env = gym.make('FrozenLake-v1', desc=None, map_name="8x8", is_slippery=True)
-    nS = env.observation_space.n # Number of states [13]
-    nA = env.action_space.n # Number of actions [13]
+    print("Environment created.")
+    return env
 
-    # Experiment parameters [1]
-    num_policies_to_try = 10
-    num_experiments_per_policy = 100
-    num_episodes_per_experiment = 10000 # Each experiment runs 10,000 episodes
+def run_one_experiment_wrapper(env, policy, num_episodes, display=False):
+    """
+    run_one_experiment 함수를 호출하고 결과를 반환합니다.
+    이는 evaluate_policy 내부에서 run_one_experiment를 호출하기 위한 래퍼입니다.
+    run_one_experiment는 tutorial.py에 정의되어 있습니다. [10, 11]
+    """
+    # run_one_experiment는 tutorial.py에서 import 됩니다.
+    return run_one_experiment(env, policy, num_episodes, display)
 
-    policy_performance_data = [] # To store (mean_goals, seed, policy, experiment_results_list)
 
-    # Try 10 other policies using different seed numbers [1]
-    # The example policy in HW is seed=17 [2]. Let's use seeds 18 through 27 for "10 other policies".
+def evaluate_policy(env, policy, num_experiments, num_episodes_per_experiment):
+    """
+    주어진 정책에 대해 여러 번의 실험을 실행하고 성능 지표를 수집합니다.
+    각 실험은 지정된 에피소드 수만큼 실행됩니다. [2, 3]
+
+    Args:
+        env: Gymnasium 환경 객체.
+        policy: 평가할 정책 (1D NumPy 배열).
+        num_experiments: 실행할 실험(그룹)의 수 (예: 100). [2, 3]
+        num_episodes_per_experiment: 각 실험(그룹)에서 실행할 에피소드 수 (예: 10000). [2, 12]
+
+    Returns:
+        tuple:
+            - experiment_goals: 각 실험에서 Goal에 도달한 횟수 리스트 (num_experiments 길이). [4, 10]
+            - experiment_mean_goal_steps: 각 실험에서 Goal에 도달한 에피소드에 대한 평균 단계 수 리스트 (num_experiments 길이). [4, 13]
+    """
+    experiment_goals = []
+    experiment_mean_goal_steps = []
+
+    print(f"Evaluating policy over {num_experiments} experiments, each with {num_episodes_per_experiment} episodes.")
+
+    for i in range(num_experiments):
+        # display=False로 설정하여 시각화 없이 빠르게 실행 [4]
+        print(f"  Running experiment {i}")
+        goals, holes, total_rewards, total_goal_steps = run_one_experiment_wrapper(
+            env, policy, num_episodes_per_experiment, display=False
+        )
+
+        # 각 실험에서의 평균 목표 도달 단계 계산 [4]
+        # goals가 0인 경우(Goal 도달 에피소드가 없는 경우) 0.0으로 처리
+        mean_steps_in_this_experiment = total_goal_steps / goals if goals > 0 else 0.0
+
+        experiment_goals.append(goals)
+        experiment_mean_goal_steps.append(mean_steps_in_this_experiment)
+
+        # 진행 상황 출력 (선택 사항)
+        if (i + 1) % 10 == 0 or (i + 1) == num_experiments:
+             print(f"  Completed {i+1}/{num_experiments} experiments...")
+
+    print("Evaluation complete.")
+    return experiment_goals, experiment_mean_goal_steps
+
+def generate_csv(data_rows, filename, header):
+    """
+    주어진 데이터를 CSV 파일로 저장합니다. [5, 6]
+
+    Args:
+        data_rows: CSV에 저장할 데이터 행들의 리스트 (예: [[goal1, mean_steps1], [goal2, mean_steps2], ...]).
+        filename: 저장할 파일 이름 (예: "results.csv"). [5]
+        header: CSV 파일의 헤더 행 리스트 (예: ['Goals', 'MeanGoalSteps']). [5]
+    """
+    print(f"Saving experiment results to {filename}...")
+    try:
+        # 'w' 모드로 파일을 열고 newline=''으로 빈 행 생성을 방지합니다. [5]
+        with open(filename, 'w', newline='') as csvfile:
+            csv_writer = csv.writer(csvfile)
+            csv_writer.writerow(header) # 헤더 쓰기 [5]
+            csv_writer.writerows(data_rows) # 데이터 쓰기
+        print(f"Data successfully saved to {filename}")
+    except IOError as e:
+        print(f"Error saving data to {filename}: {e}")
+
+
+def format_policy_for_display(policy, n_states):
+    """
+    정책(1D 배열)을 2D 그리드 형태로 변환하고 액션 번호를 방향 화살표로 매핑합니다. [7, 8]
+
+    Args:
+        policy: 포맷팅할 정책 (1D NumPy 배열).
+        n_states: 상태의 총 개수 (8x8 맵의 경우 64). [14]
+
+    Returns:
+        NumPy 배열: 방향 화살표로 표현된 2D 정책 그리드.
+    """
+    # display_policy 함수를 사용하여 1D 정책을 2D 배열로 변환합니다.
+    # display_policy는 tutorial.py에 정의되어 있습니다. [15]
+    policy_2d = display_policy(policy, n_states)
+
+    # 액션 번호를 방향 화살표로 매핑합니다.
+    # 0:Left, 1:Down, 2:Right, 3:Up [7, 8, 16]
+    action_map = {0: '<', 1: 'v', 2: '>', 3: '^'}
+    policy_display = np.vectorize(action_map.get)(policy_2d)
+
+    return policy_display
+
+# ================================================================================
+# Part 1. Fixed Policies
+# ================================================================================
+
+def part_one():
+    print("Running Part 1: Evaluating Fixed Policies") [1]
+
+    # 환경 생성 [새로운 함수]
+    env = generate_env()
+    nS = env.observation_space.n # Number of states [1, 14]
+    nA = env.action_space.n # Number of actions [1, 14]
+
+    # 실험 파라미터 [12]
+    num_policies_to_try = 10 # 10개의 다른 정책 시도 [2]
+    num_experiments_per_policy = 100 # 각 정책당 100번의 실험 실행 [2, 3]
+    num_episodes_per_experiment = 10000 # 각 실험당 10,000 에피소드 실행 [2, 12]
+
+    # 정책 성능 데이터 저장을 위한 리스트
+    policy_performance_data = [] # To store (mean_goals, seed, policy, experiment_results_list) [27]
+
+    # 10개의 다른 정책 시도 (다른 시드 사용) [2, 12]
+    # 과제 예시 seed=17 외의 10개 정책 (예: seeds 1부터 10까지 사용)
     start_seed = 1
     end_seed = start_seed + num_policies_to_try
 
     for seed in range(start_seed, end_seed):
-        print(f"Testing policy with seed: {seed}")
+        print(f"\n--- Testing policy with seed: {seed} ---")
+
+        # 랜덤 정책 생성 (tutorial.py의 함수 사용) [3, 28, 29]
         policy = generate_random_policy(nA, nS, seed=seed)
 
-        experiment_goals = [] # List to store goals from each of the 100 experiments
-        experiment_mean_goal_steps = [] # List to store mean steps from each of the 100 experiments
+        # 정책 평가 [새로운 함수]
+        # 이 함수가 run_one_experiment를 100번 호출하고 결과를 수집합니다. [3, 4]
+        experiment_goals, experiment_mean_goal_steps = evaluate_policy(
+            env, policy, num_experiments_per_policy, num_episodes_per_experiment
+        )
 
-        # Run the experiment 100 times (each time is 10,000 episodes) [1]
-        for i in range(num_experiments_per_policy):
-            print(f"  Running experiment {i}/{num_experiments_per_policy} for seed {seed}...")
-            goals, holes, total_rewards, total_goal_steps = run_one_experiment(
-                env, policy, num_episodes_per_experiment, display=False
-            )
-
-            # Compute mean goal steps for this specific experiment run [2, 12]
-            # This is total steps in successful episodes divided by the number of successful episodes
-            mean_steps_in_this_experiment = total_goal_steps / goals if goals > 0 else 0.0 # Handle division by zero [11]
-
-            experiment_goals.append(goals)
-            experiment_mean_goal_steps.append(mean_steps_in_this_experiment)
-
-        # Compute mean goals over the 100 experiments for this policy [2]
+        # 100개 실험 결과의 평균 목표 도달 횟수 계산 [2, 4]
         mean_goals_for_policy = np.mean(experiment_goals)
 
-        # Store policy data and results [2]
+        # 정책 데이터 및 결과 저장 [27]
         policy_performance_data.append({
             'seed': seed,
             'policy': policy,
             'mean_goals_across_experiments': mean_goals_for_policy,
-            'experiment_goals': experiment_goals, # Store list of 100 goal counts
-            'experiment_mean_goal_steps': experiment_mean_goal_steps # Store list of 100 mean step values
+            'experiment_goals': experiment_goals, # 100개 실험의 목표 횟수 리스트 저장 [27]
+            'experiment_mean_goal_steps': experiment_mean_goal_steps # 100개 실험의 평균 단계 리스트 저장 [27]
         })
 
-        print(f"  Policy seed {seed}: Mean Goals across {num_experiments_per_policy} experiments: {mean_goals_for_policy:.2f}")
+        print(f"Policy seed {seed}: Mean Goals across {num_experiments_per_policy} experiments: {mean_goals_for_policy:.2f}")
 
-    # Sort policies by mean goals in descending order to find TOP TWO [2]
+        # (옵션) 각 정책의 100개 실험 결과를 즉시 CSV로 저장
+        # 과제 요구사항에 따라 상위 2개 정책만 저장해도 무방하나, 모든 정책 저장도 가능.
+        # 여기서는 상위 2개 정책만 저장하는 로직을 따릅니다.
+
+    # 10개 정책을 평균 목표 도달 횟수 기준으로 정렬 (내림차순) [30, 31]
     policy_performance_data.sort(key=lambda x: x['mean_goals_across_experiments'], reverse=True)
 
     print("\n--- Top 2 Policies ---")
 
-    # Select and process the TOP TWO policies [2]  
+    # 상위 2개 정책 선택 및 처리 [30, 31]
+    # min(2, len(policy_performance_data))는 정책 수가 2개 미만일 경우를 처리합니다.
     for rank in range(min(2, len(policy_performance_data))):
         top_policy_info = policy_performance_data[rank]
         seed = top_policy_info['seed']
@@ -96,68 +207,28 @@ def part_one():
 
         print(f"\nRank {rank+1}: Policy with Seed {seed} (Mean Goals: {mean_goals:.2f})")
 
-        # Display the policy in a 2D array [2]
-        policy_2d = display_policy(policy, nS)
+        # 정책을 2D 배열로 시각화 [7, 30] - [새로운 함수 사용]
         print("Policy (2D array):")
-        # Convert policy actions (0, 1, 2, 3) to directional arrows or letters for better visualization
-        # 0:Left, 1:Down, 2:Right, 3:Up [13]
-        action_map = {0: '<', 1: 'v', 2: '>', 3: '^'}
-        policy_display = np.vectorize(action_map.get)(policy_2d)
+        policy_display = format_policy_for_display(policy, nS)
         print(policy_display)
 
-        # Save the results of the 100 experiments to a CSV file for R analysis [사용자 요청]
-        csv_filename = f"part1_policy_{seed}.csv"
-        print(f"Saving experiment results for R analysis to {csv_filename}")
-        with open(csv_filename, 'w', newline='') as csvfile:
-            csv_writer = csv.writer(csvfile)
-            # Write header row, matching potential R script expectations [8]
-            csv_writer.writerow(['Goals', 'MeanGoalSteps'])
-            # Write data rows (one row per experiment run)
-            for i in range(num_experiments_per_policy):
-                 # Saving the goals count and the mean steps per successful episode for each 10k-episode run
-                csv_writer.writerow([experiment_goals[i], experiment_mean_goal_steps[i]])
+        # 100개 실험 결과를 CSV 파일로 저장 (R 분석용) [사용자 요청, 31] - [새로운 함수 사용]
+        csv_filename = f"part1_policy_seed_{seed}.csv"
+        # CSV에 저장할 데이터 형식: 각 행은 한 실험의 [Goals, MeanGoalSteps] [5]
+        csv_data_rows = [[experiment_goals[i], experiment_mean_goal_steps[i]] for i in range(num_experiments_per_policy)]
+        csv_header = ['Goals', 'MeanGoalSteps'] # 헤더 설정 [5]
+        generate_csv(csv_data_rows, csv_filename, csv_header)
 
-        print(f"Data for Policy Seed {seed} saved to {csv_filename}")
+        # TODO: 추가 통계 계산 및 저장은 R 스크립트에서 수행 (과제 요구사항 및 사용자 요청) [30]
+        # TODO: 히스토그램 생성은 R 스크립트에서 수행 (과제 요구사항 및 사용자 요청) [30]
 
-    env.close() # Close environment
+    env.close() # 환경 닫기 [32]
+    print("\nPart 1 execution finished.")
 
-# 이제 part_two 함수 내에서 위 value_iteration 함수를 호출하고
-# 반환된 V와 policy를 사용하여 요구되는 출력 (2D 배열, 히스토그램)을 생성하면 됩니다.
-# 예:
-def part_two():
-    print("Running Part 2: Optimal Policy by Value Iteration")
-    env = gym.make('FrozenLake-v1', desc=None, map_name="8x8", is_slippery=True).unwrapped
-
-    # Value Iteration 실행
-    optimal_V, optimal_policy = value_iteration(env, gamma=1.0, theta=1e-8)
-
-    # 결과 출력 (2D 배열)
-    print("\n--- Converged Optimal State-Value Function (V*) ---")
-    size = int(math.sqrt(env.observation_space.n)) # 8x8 맵이므로 크기는 8
-    V_2d = optimal_V.reshape((size, size))
-    # V 값 출력 시 소수점 포맷팅
-    print(np.array2string(V_2d, formatter={'float_kind':lambda x: "%.4f" % x}))
-
-    print("\n--- Extracted Optimal Policy ---")
-    # display_policy 함수를 사용하여 정책을 2D 배열로 출력 (main.txt에 있음)
-    # 액션 매핑 0:Left, 1:Down, 2:Right, 3:Up [5]
-    action_map = {0: '<', 1: 'v', 2: '>', 3: '^'}
-    policy_display = np.vectorize(action_map.get)(optimal_policy.reshape((size, size)))
-    print(policy_display)
-
-    # TODO: Evaluate the optimal policy and generate histogram (similar to Part 1) [3]
-    # You'll need to run_one_experiment multiple times using optimal_policy
-    # Collect goal counts and mean steps for each run
-    # Save to a CSV file
-    # Generate histogram from the CSV data (likely using R or Python plotting library as you did in Part 1)
-
-    env.close()
-    print("\nPart 2 execution finished.")
-
-# def part_two():
-#     # TODO: your code here ...
-#     pass
-
+# ================================================================================
+# Part 2. Optimal Policy by Value Iteration
+# ================================================================================
+    
 # Need a helper function to get terminal states from the environment map
 def get_terminal_states(env):
     """
@@ -264,13 +335,62 @@ def value_iteration(env, gamma=1.0, theta=1e-8):
     print("Optimal policy extracted.")
     return V, policy
 
+def part_two():
+    print("Running Part 2: Optimal Policy by Value Iteration")
+
+    # 환경 생성 [새로운 함수], Value Iteration을 위해 .unwrapped 필요 [17, 32]
+    env = generate_env()
+    unwrapped_env = env.unwrapped # Value Iteration은 unwrapped 환경 객체를 사용합니다. [17, 32]
+    nS = unwrapped_env.observation_space.n # 상태의 개수 [14]
+
+    # Value Iteration 실행 [19, 20, 32]
+    # gamma=1.0, theta=1e-8 사용 (과제 요구사항) [21, 22]
+    optimal_V, optimal_policy = value_iteration(unwrapped_env, gamma=1.0, theta=1e-8)
+
+    # 수렴된 V(s) 테이블을 2D 배열로 출력 [32, 33]
+    print("\n--- Converged Optimal State-Value Function (V*) ---")
+    # 8x8 맵이므로 크기는 8 [8]
+    size = int(math.sqrt(nS))
+    V_2d = optimal_V.reshape((size, size))
+    # V 값 출력 시 소수점 포맷팅 [8]
+    print(np.array2string(V_2d, formatter={'float_kind':lambda x: "%.4f" % x}))
+
+    print("\n--- Extracted Optimal Policy ---")
+    # 최적 정책을 2D 배열로 시각화 [8, 33] - [새로운 함수 사용]
+    policy_display = format_policy_for_display(optimal_policy, nS)
+    print(policy_display)
+
+    # TODO: Evaluate the optimal policy and generate histogram (similar to Part 1) [6, 33]
+    # 최적 정책 평가 [새로운 함수 사용]
+    # Part 1과 동일한 평가 설정 사용 가정 (100 실험, 각 10,000 에피소드) [2]
+    num_experiments_for_optimal = 100
+    num_episodes_per_experiment = 10000
+    optimal_policy_goals, optimal_policy_mean_goal_steps = evaluate_policy(
+        env, optimal_policy, num_experiments_for_optimal, num_episodes_per_experiment
+    )
+
+    # 최적 정책의 100개 실험 결과를 CSV 파일로 저장 (R 분석용) [6] - [새로운 함수 사용]
+    csv_filename = "part2_optimal_policy.csv"
+    # CSV에 저장할 데이터 형식: 각 행은 한 실험의 [Goals, MeanGoalSteps] [6]
+    csv_data_rows = [[optimal_policy_goals[i], optimal_policy_mean_goal_steps[i]] for i in range(num_experiments_for_optimal)]
+    csv_header = ['Goals', 'MeanGoalSteps'] # 헤더 설정
+    generate_csv(csv_data_rows, csv_filename, csv_header)
+
+    # TODO: 추가 통계 계산 및 저장은 R 스크립트에서 수행 (과제 요구사항 및 사용자 요청) [33]
+    # TODO: 히스토그램 생성은 R 스크립트에서 수행 (과제 요구사항 및 사용자 요청) [33]
+
+    env.close() # 환경 닫기 [6]
+    print("\nPart 2 execution finished.")
+
+# ================================================================================
+# Main
+# ================================================================================
+#   
 def main():
     # TODO: feel free to change this as required
     # TODO: also, check tutorial.py for some hints on how to implement your experiments
     # parst_one()
     part_two()
 
-
 if __name__ == "__main__":
     main()
-
