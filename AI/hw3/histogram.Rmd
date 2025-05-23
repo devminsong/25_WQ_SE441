@@ -1,0 +1,73 @@
+---
+title: "CSC480_HW3"
+author: "MIN SONG"
+date: "2025-05-21"
+output:
+  html_document:
+    df_print: paged
+  pdf_document:
+    latex_engine: xelatex
+header-includes:
+- \usepackage{fontspec}
+- \setmainfont{Calibri}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r load, echo=FALSE, message=FALSE, warning=FALSE}
+library(dplyr)
+library(ggplot2)
+
+set.seed(123)
+```
+
+## Problem1
+### a.
+```{r 1-a}
+data <- read.csv("part1_policy_1.csv", header = TRUE, stringsAsFactors = TRUE)
+
+# 데이터 확인 (선택 사항)
+# head(data)
+# summary(data)
+
+# 히스토그램 제목에 포함될 통계치 계산
+# Goals 열의 평균과 표준편차
+mean_goals <- mean(data$Goals)
+stdev_goals <- sd(data$Goals)
+
+# 목표 달성 시 평균 걸음 수의 평균
+# goals가 0보다 큰 정책들의 MeanGoalSteps만 사용하여 평균 계산
+# dplyr을 사용하면 더 간결하게 처리 가능: data %>% filter(Goals > 0) %>% summarize(mean_steps = mean(MeanGoalSteps))
+valid_goal_steps <- data$MeanGoalSteps[data$Goals > 0]
+mean_goal_steps <- if (length(valid_goal_steps) > 0) mean(valid_goal_steps) else 0
+
+# Python 코드에서 설정한 각 정책당 에피소드 수 (제목에 사용)
+num_episodes_per_policy <- 10000 # 이 값은 Python 코드와 일치해야 합니다.
+
+# 히스토그램 제목 생성
+# Figure 2 예시와 유사한 형식 사용
+histogram_title <- sprintf(
+  "Density Histogram of Goals (out of %d Episodes) Across %d Policies\n[mean: %.2f, stdev: %.2f, mean#steps: %.2f]",
+  num_episodes_per_policy,
+  nrow(data), # 테스트된 정책 개수
+  mean_goals,
+  stdev_goals,
+  mean_goal_steps
+)
+
+# 히스토그램 그리기 (ggplot2 사용)
+# x축: Goals (목표 달성 횟수)
+# y축: density (밀도) - ..density.. 를 사용하여 y축을 밀도로 설정
+# binwidth 또는 bins를 조절하여 막대 개수 조절 가능 (여기서는 bins = 30으로 예시)
+ggplot(data, aes(x = MeanGoalSteps)) +
+  geom_histogram(aes(y = ..density..), bins = 30, fill = "skyblue", color = "black") +
+  labs(
+    title = histogram_title,
+    x = sprintf("Number of Episodes Reaching Goal (out of %d)", num_episodes_per_policy),
+    y = "Density"
+  ) +
+  theme_minimal() + # 깔끔한 테마 적용
+  theme(plot.title = element_text(hjust = 0.5)) # 제목 가운데 정렬
+```

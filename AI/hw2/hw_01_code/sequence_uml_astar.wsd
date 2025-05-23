@@ -1,0 +1,144 @@
+@startuml
+title A* Search
+
+actor User
+
+participant Main
+
+participant Problem
+
+participant SearchAlgorithms as Algorithms
+
+participant SearchTreeNode as TreeNode
+
+participant State
+
+participant SearchResults as Results
+
+User->>Main: 프로그램 실행
+
+Main->>Main: CityMap, SearchRequest 로드
+
+Main->>Problem: 문제 생성 (CityMap, test_case)
+
+Problem-->>Main: Problem 객체 반환
+
+Main->>Algorithms: A_start_search(problem) 호출
+
+Note over Algorithms: A* 탐색 시작
+
+Algorithms->>Problem: get_initial_state() 호출
+
+Problem-->>Algorithms: 초기 State 반환
+
+Algorithms->>TreeNode: 초기 노드 생성 (parent=None, action=None, state=initial_state, cost=0)
+
+TreeNode-->>Algorithms: start_node 반환
+
+Algorithms->>Problem: is_goal_state(start_node.state) 호출
+
+Problem-->>Algorithms: 목표 상태 여부 반환
+
+alt 시작 상태가 목표 상태인 경우
+
+Algorithms->>TreeNode: path_to_root(), get_path_cost() 호출
+
+TreeNode-->>Algorithms: 경로, 비용 반환
+
+Algorithms->>Results: 결과 생성 (경로, 비용, nodes_reached=1, nodes_explored=1)
+
+Algorithms-->>Main: SearchResults 반환
+
+else 시작 상태가 목표 상태가 아닌 경우
+
+Algorithms->>Problem: estimate_cost_to_solution(initial_state) 호출
+
+Problem-->>Algorithms: 초기 휴리스틱 값 반환
+
+Algorithms->>Algorithms: frontier = PriorityQueue([(heuristic, 0, start_node)]) 초기화 // (f(n), g(n), node)
+
+Algorithms->>State: reached = {initial_state.get_representation(): heuristic} 초기화
+
+State-->>Algorithms: 상태 표현 반환
+
+Algorithms->>Algorithms: nodes_explored = 0, nodes_reached = 1 초기화
+
+loop frontier가 비어있지 않은 동안
+
+Algorithms->>Algorithms: (f_cost, path_cost, current_node) = frontier.pop(0) // 최소 f(n)
+
+Algorithms->>Algorithms: nodes_explored += 1
+
+Algorithms->>Problem: is_goal_state(current_node.state) 호출
+
+Problem-->>Algorithms: 목표 상태 여부 반환
+
+alt 현재 노드가 목표 상태인 경우
+
+Algorithms->>TreeNode: path_to_root(), get_path_cost() 호출
+
+TreeNode-->>Algorithms: 경로, 비용 반환
+
+Algorithms->>Results: 결과 생성 (경로, 비용, nodes_reached, nodes_explored)
+
+Algorithms-->>Main: SearchResults 반환
+
+else 현재 노드가 목표 상태가 아닌 경우
+
+Algorithms->>Problem: generate_children(current_node.state) 호출
+
+Problem-->>Algorithms: next_states 리스트 반환
+
+loop 각 next_state에 대해
+
+Algorithms->>State: s = next_state.get_representation() 호출
+
+State-->>Algorithms: 상태 표현 반환
+
+Algorithms->>State: next_state.get_location() 호출
+
+State-->>Algorithms: 위치(action) 반환
+
+Algorithms->>Problem: get_action_cost(current_node.state, action) 호출
+
+Problem-->>Algorithms: 액션 비용 반환
+
+Algorithms->>Problem: estimate_cost_to_solution(next_state) 호출
+
+Problem-->>Algorithms: 휴리스틱 값 반환
+
+Algorithms->>Algorithms: new_path_cost = path_cost + cost 계산
+
+Algorithms->>Algorithms: new_f_cost = new_path_cost + heuristic_cost 계산
+
+Algorithms->>TreeNode: child_node 생성 (parent=current_node, action, state=next_state, cost=new_path_cost)
+
+TreeNode-->>Algorithms: child_node 반환
+
+alt s가 reached에 없거나 new_f_cost < reached[s] 인 경우
+
+Algorithms->>Algorithms: nodes_reached += 1
+
+Algorithms->>Algorithms: reached[s] = new_f_cost 업데이트
+
+Algorithms->>Algorithms: frontier.push((new_f_cost, new_path_cost, child_node))
+
+end
+
+end
+
+end
+
+end
+
+Note over Algorithms: 목표 상태를 찾지 못함
+
+Algorithms->>Results: 결과 생성 (None, None, nodes_reached, nodes_explored)
+
+Algorithms-->>Main: SearchResults 반환
+
+end
+
+Main->>Main: 결과 출력 및 처리
+
+@enduml
