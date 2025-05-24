@@ -102,7 +102,6 @@ def display_policy(policy, n_states):
     policy = policy.reshape((side, side))
     return policy
 
-
 def main():
     # Create a FrozenLake 8x8 environment using Gymnasium
     # (https://gymnasium.farama.org/environments/toy_text/frozen_lake/).
