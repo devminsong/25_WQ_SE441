@@ -1,4 +1,3 @@
-
 import sys
 import math
 
@@ -35,8 +34,10 @@ def generate_env(id='FrozenLake-v1', desc=None, map_name="8x8", is_slippery=True
     Sets the map to 8x8 and is_slippery=True as per the assignment requirements.
     """
     print("Generating environment...")
-    env = gym.make(id=id, desc=desc, map_name=map_name, is_slippery=is_slippery)
+    env = gym.make(id=id, desc=desc, map_name=map_name, is_slippery=is_slippery, render_mode="ansi")
     print("Environment created.")
+    env.reset()
+    print(env.render())
     return env
 
 def evaluate_policy(env, policy, num_experiments, num_episodes_per_experiment):
@@ -109,7 +110,7 @@ num_episodes_per_experiment = 10000
 # ================================================================================
 
 def part_one():
-    print("Running Part 1: Evaluating Fixed Policies")
+    print("=== Running Part 1: Evaluating Fixed Policies ===")
 
     env = generate_env('FrozenLake-v1', None, "8x8", True)
     nS = env.observation_space.n
@@ -118,7 +119,7 @@ def part_one():
     # List to store policy performance data
     policy_performance_data = [] 
 
-    for seed in num_policies_to_try:
+    for seed in range(num_policies_to_try):
         print(f"\n--- Testing policy with seed: {seed} ---")
 
         policy = generate_random_policy(nA, nS, seed=seed)
@@ -144,7 +145,7 @@ def part_one():
 
     print("\n--- Top 2 Policies ---")
     # Select and process the top 2 policies
-    for rank in range(len(policy_performance_data)):
+    for rank in range(2):
         top_policy_info = policy_performance_data[rank]
         seed = top_policy_info['seed']
         policy = top_policy_info['policy']
@@ -240,7 +241,6 @@ def value_iteration(env, gamma=1.0, theta=1e-8):
             delta = max(delta, abs(v_old - V[s]))
 
         # until Δ<θ
-        print(f"Value Iteration Loop finished, delta: {delta:.10f}, theta: {theta}")
         if delta < theta:
             print("Value Iteration converged.")
             break
@@ -251,7 +251,6 @@ def value_iteration(env, gamma=1.0, theta=1e-8):
     policy = np.zeros(nS)
     for s in range(nS):
         if s in terminal_states:
-             policy[s] = 0
              continue
 
         q_values = np.zeros(nA)
@@ -268,7 +267,7 @@ def value_iteration(env, gamma=1.0, theta=1e-8):
     return V, policy
 
 def part_two():
-    print("Running Part 2: Optimal Policy by Value Iteration")
+    print("=== Running Part 2: Optimal Policy by Value Iteration ===")
 
     env = generate_env('FrozenLake-v1', None, "8x8", True)
     unwrapped_env = env.unwrapped 
@@ -302,8 +301,9 @@ def part_two():
 # ================================================================================
 
 def main():
-    # part_one()
+    part_one()
     part_two()
+    input("Press Enter to exit...")
 
 if __name__ == "__main__":
     main()

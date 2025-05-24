@@ -1,115 +1,135 @@
 @startuml
-' 다이어그램 제목
-title tutorial.txt 실행 흐름 시퀀스 다이어그램
+participant "main.py" as Main
+participant "tutorial.py" as Tutorial
+participant "Gymnasium Env" as Env
 
-' 참가자 (주요 구성요소/함수)
-participant "스크립트 시작" as Script
-box "튜토리얼 스크립트"
-    participant "main()" as Main
-    participant "generate_random_policy()" as GenPolicy
-    participant "run_one_experiment()" as RunExp
-    participant "display_policy()" as DispPolicy
-end box
-participant "Gymnasium 환경 인스턴스" as GymEnv
-participant "NumPy 라이브러리" as NumPy
-
-' 실행 순서
-Script -> Main : 실행 시작 (__main__에 의해 호출) [1]
-
+Main -> Env: generate_env() : gym.make()
+activate Env
 activate Main
+Env --> Main: env object
+deactivate Env
 
-Main -> Main : 필요한 라이브러리 임포트 확인 (gymnasium, numpy) [2, 3]
-note right
-    try...except 구문 포함
-    (설치 여부 확인 및 안내)
-end note
+== Part 1: Generate and Evaluate Random Policies ==
+Main -> Tutorial: generate_random_policy(seed)
+activate Tutorial
+Tutorial --> Main: policy object
+deactivate Tutorial
 
-Main -> GymEnv : 환경 생성 (gym.make) [4]
-activate GymEnv
-note right of GymEnv
-    'FrozenLake-v1', map_name="8x8",
-    is_slippery=True, render_mode="ansi" 설정 사용 [4]
-end note
-GymEnv --> Main : 환경 인스턴스 반환 (래퍼 포함) [5]
-deactivate GymEnv
-
-Main -> Main : 환경 래퍼 타입 출력 [5]
-
-Main -> GymEnv : 환경 초기화 (env.reset()) [5]
-activate GymEnv
-GymEnv --> Main : 초기 상태, 정보 반환
-deactivate GymEnv
-
-Main -> GymEnv : 환경 렌더링 (env.render()) [4, 6]
-activate GymEnv
-GymEnv --> Main : 환경 상태 출력 (ANSI)
-deactivate GymEnv
-
-Main -> GymEnv : 상태 개수 접근 (env.observation_space.n) [6]
-Main -> GymEnv : 행동 개수 접근 (env.action_space.n) [6]
-note right of GymEnv
-    8x8 맵: 상태 64개 (nS)
-    행동 4개 (nA) [6]
-end note
-
-Main -> GymEnv : MDP 동적 모델 'P' 접근 및 분석 예시 [6, 7]
-note right of GymEnv
-    상태-행동-다음상태 전이 정보
-    (확률 p, 다음 상태 s', 보상 r, 터미널 T)
-    리스트 형태로 저장 [6]
-    미끄러운 환경의 확률 특성 설명 포함 [6]
-end note
-
-Main -> GenPolicy : 임의 정책 생성 호출 (generate_random_policy) [3]
-activate GenPolicy
-GenPolicy -> NumPy : 임의 값 생성 및 배열 생성 (numpy.random, numpy.ndarray) [3]
-activate NumPy
-NumPy --> GenPolicy : 임의 값 및 배열 제공
-deactivate NumPy
-GenPolicy --> Main : 생성된 정책 반환 (NumPy 배열) [3]
-deactivate GenPolicy
-
-Main -> DispPolicy : 정책 출력 호출 (display_policy) [4]
-activate DispPolicy
-DispPolicy -> NumPy : 배열 형태 변경 (reshape) [4]
-activate NumPy
-NumPy --> DispPolicy : 형태 변경된 배열
-deactivate NumPy
-DispPolicy --> Main : (형태 변경된 정책 출력 후 반환 없음) [4]
-deactivate DispPolicy
-
-Main -> RunExp : 실험 실행 호출 (run_one_experiment) [3, 4]
-activate RunExp
-
-    loop 지정된 에피소드 수 만큼 반복 (num_episodes) [3]
-        RunExp -> GymEnv : 각 에피소드 시작 시 환경 초기화 (env.reset())
-        activate GymEnv
-        GymEnv --> RunExp : 초기 상태, 정보 반환
-        deactivate GymEnv
-
-        loop 에피소드가 끝날 때까지 (done=True 또는 truncated=True) [3]
-            ' 현재 상태에 따라 정책에서 행동 선택 (policy[state]) [3]
-            note left
-                정책(policy) 데이터 사용
-            end note
-            RunExp -> GymEnv : 환경에 행동 적용 (env.step(action)) [3]
-            activate GymEnv
-            GymEnv --> RunExp : 다음 상태, 보상, 종료 여부(done), 정보 반환 [3]
-            deactivate GymEnv
-
-            ' 보상 누적, 상태 업데이트 등
-        end
-
-        ' 에피소드 결과 기록 (목표 달성 횟수, 총 보상, 걸음 수 등) [3, 4]
-    end
-
-RunExp --> Main : 실험 통계 결과 반환 (goals, holes, total_rewards 등) [4]
-deactivate RunExp
-
-Main -> Main : 실험 결과 출력 [4]
-
+== Part 2: Calculate Optimal Policy using Value Iteration ==
+Main -> Main: value_iteration(env)
+activate Main
+Main -> Main: calculate V and optimal policy based on env.P
+Main --> Main: returns V, optimal_policy
 deactivate Main
 
-Script --> Script : 스크립트 실행 종료
+== Policy Evaluation (Common for Part 1 & Part 2) ==
+Main -> Main: evaluate_policy(env, policy, num_experiments, num_episodes_per_experiment)
+activate Main
+loop Loop num_experiments times
+  Main -> Tutorial: run_one_experiment(env, policy, num_episodes)
+  activate Tutorial
+  loop Loop num_episodes times
+    Tutorial -> Env: reset()
+    activate Env
+    Env --> Tutorial: initial state
+    deactivate Env
+    loop Loop until episode ends (done)
+      Tutorial -> Env: step(action) using policy[state]
+      activate Env
+      Env --> Tutorial: next_state, reward, done, info, p
+      deactivate Env
+    end
+  end
+  Tutorial --> Main: goals, holes, total_rewards, total_goal_steps
+  deactivate Tutorial
+end
+Main --> Main: returns goals_list, mean_total_goal_steps_list
+deactivate Main
+
+== Display and Save Results (Common for Part 1 & Part 2) ==
+Main -> Tutorial: display_policy(policy, n_states)
+activate Tutorial
+Tutorial --> Main: formatted policy string
+deactivate Tutorial
+Main -> Main: print(formatted policy)
+Main -> Main: display_formatted_policy(V, nS)
+Main -> Main: print(formatted V table)
+Main -> Main: generate_csv(data_rows, filename, header)
+activate Main
+Main --> Main: save data to CSV
+deactivate Main
+
+Main -> Env: env.close()
+activate Env
+deactivate Env
+deactivate Main
 
 @enduml
+
+' @startuml
+' participant "main.py" as Main
+' participant "tutorial.py" as Tutorial
+' participant "Gymnasium Env" as Env
+
+' Main -> Env: generate_env() : gym.make()
+' activate Env
+' activate Main
+' Env --> Main: env object
+' deactivate Env
+
+' == Part 1: 랜덤 정책 생성 및 평가 ==
+' Main -> Tutorial: generate_random_policy(seed)
+' activate Tutorial
+' Tutorial --> Main: policy object
+' deactivate Tutorial
+
+' == Part 2: 가치 반복으로 최적 정책 계산 ==
+' Main -> Main: value_iteration(env)
+' activate Main
+' Main -> Main: calculate V and optimal policy based on env.P
+' Main --> Main: returns V, optimal_policy
+' deactivate Main
+
+' == 정책 평가 (Part 1 & Part 2 공통) ==
+' Main -> Main: evaluate_policy(env, policy, num_experiments, num_episodes_per_experiment)
+' activate Main
+' loop num_experiments 회 반복
+'   Main -> Tutorial: run_one_experiment(env, policy, num_episodes)
+'   activate Tutorial
+'   loop num_episodes 회 반복
+'     Tutorial -> Env: reset()
+'     activate Env
+'     Env --> Tutorial: initial state
+'     deactivate Env
+'     loop 에피소드 종료까지 (done)
+'       Tutorial -> Env: step(action) using policy[state]
+'       activate Env
+'       Env --> Tutorial: next_state, reward, done, info, p
+'       deactivate Env
+'     end
+'   end
+'   Tutorial --> Main: goals, holes, total_rewards, total_goal_steps
+'   deactivate Tutorial
+' end
+' Main --> Main: returns goals_list, mean_total_goal_steps_list
+' deactivate Main
+
+' == 결과 표시 및 저장 (Part 1 & Part 2 공통) ==
+' Main -> Tutorial: display_policy(policy, n_states)
+' activate Tutorial
+' Tutorial --> Main: formatted policy string
+' deactivate Tutorial
+' Main -> Main: print(formatted policy)
+' Main -> Main: display_formatted_policy(V, nS)
+' Main -> Main: print(formatted V table)
+' Main -> Main: generate_csv(data_rows, filename, header)
+' activate Main
+' Main --> Main: save data to CSV
+' deactivate Main
+
+' Main -> Env: env.close()
+' activate Env
+' deactivate Env
+' deactivate Main
+
+' @enduml

@@ -1,55 +1,114 @@
-@startuml
-' 다이어그램 제목
-title Tutorial.txt Components and Interactions
+' @startuml
+' ' 다이어그램 제목
+' title Tutorial.txt Components and Interactions
 
-' 라이브러리 정의
+' ' 라이브러리 정의
+' package "Gymnasium Library" as GymLib {
+'   component "FrozenLake-v1" as Env_Comp
+' }
+
+' package "NumPy Library" as NumPyLib {
+'   component "NumPy" as NP_Comp
+' }
+
+' ' 스크립트 내 함수 (Artifact로 표현)
+' artifact "generate_random_policy" as GenPolicy_Art
+' artifact "run_one_experiment" as RunExp_Art
+' artifact "display_policy" as DispPolicy_Art
+' artifact "main function" as Main_Art
+
+' ' 데이터 구조 (Node 또는 Rectangle로 표현)
+' rectangle "Policy\n(NumPy Array)" as Policy_Data
+' rectangle "Environment State\n& Dynamics (P)" as Env_Data
+' note right of Env_Data
+'   Includes P(s'|s,a)
+'   and R(s,a,s')
+' end note
+
+' ' 관계 정의
+' ' main 함수는 환경을 생성하고 다른 함수들을 호출하며 환경과 직접 상호작용 시연
+' Main_Art --> GymLib : creates Env
+' Main_Art --> GenPolicy_Art : calls
+' Main_Art --> RunExp_Art : calls
+' Main_Art --> DispPolicy_Art : calls
+' Main_Art --> Env_Comp : interacts directly (step, render, get_wrapper_attr)
+
+' ' 환경 구성 요소
+' Env_Comp --> Env_Data : manages
+
+' ' generate_random_policy 함수 관계
+' GenPolicy_Art ..> NP_Comp : uses
+' GenPolicy_Art --> Policy_Data : creates
+
+' ' run_one_experiment 함수 관계
+' RunExp_Art ..> Env_Comp : uses
+' RunExp_Art ..> Policy_Data : uses
+' RunExp_Art ..> NP_Comp : uses (for stats)
+
+' ' display_policy 함수 관계
+' DispPolicy_Art ..> Policy_Data : uses
+' DispPolicy_Art ..> NP_Comp : uses (reshape)
+
+' ' 환경은 내부적으로 NumPy 사용
+' Env_Comp ..> NP_Comp : uses (internal)
+
+' @enduml
+
+@startuml
+' FrozenLakeEnv representation in a Component/Interaction Style
+
+' Gymnasium 라이브러리 패키지
 package "Gymnasium Library" as GymLib {
-  component "FrozenLake-v1" as Env_Comp
+  ' FrozenLakeEnv 환경 컴포넌트
+  component "FrozenLakeEnv\n(Environment)" as Env_Comp {
+    ' 이 컴포넌트가 관리하거나 포함하는 데이터/정보
+    rectangle "Environment Dynamics\n(P Dictionary)" as P_Data
+    note right of P_Data
+      Includes transition probabilities
+      and rewards [9, 12, 13]
+    end note
+    rectangle "State/Action Space Info\n(nS, nA)" as SpaceInfo_Data
+    note right of SpaceInfo_Data
+        observation_space.n, action_space.n
+        [10, 14-16]
+    end note
+    rectangle "Map Description\n(desc)" as Desc_Data
+    note right of Desc_Data
+      8x8 grid structure
+      [5-7, 17]
+    end note
+
+    ' 이 컴포넌트와의 상호작용을 위한 주요 기능/인터페이스
+    artifact "Interaction Methods\n(reset, step, render,\nget_wrapper_attr, unwrapped, close)" as Env_Interface
+    note left of Env_Interface
+        Used by external code
+        [4, 12, 13, 16, 18-24]
+    end note
+  }
 }
 
+' 환경 컴포넌트는 내부 데이터/정보를 관리하거나 제공합니다.
+Env_Comp --> P_Data : manages/provides
+Env_Comp --> SpaceInfo_Data : manages/provides
+Env_Comp --> Desc_Data : manages/provides
+Env_Comp --> Env_Interface : provides interface
+
+' 이 환경을 사용하는 외부 코드 (예: tutorial.py의 main(), run_one_experiment(), main.py의 part_one(), part_two() 등)
+artifact "External Code\nusing Environment" as UserCode
+
+' 외부 코드는 환경 컴포넌트의 인터페이스를 통해 상호작용합니다.
+UserCode --> Env_Comp : interacts via
+UserCode ..> Env_Interface : calls methods
+UserCode ..> P_Data : accesses P [9, 10, 12, 13]
+UserCode ..> SpaceInfo_Data : accesses [10, 14, 16]
+UserCode ..> Desc_Data : accesses [17]
+
+
+' NumPy 라이브러리 (환경 컴포넌트와 사용자 코드 모두 사용)
 package "NumPy Library" as NumPyLib {
   component "NumPy" as NP_Comp
 }
-
-' 스크립트 내 함수 (Artifact로 표현)
-artifact "generate_random_policy" as GenPolicy_Art
-artifact "run_one_experiment" as RunExp_Art
-artifact "display_policy" as DispPolicy_Art
-artifact "main function" as Main_Art
-
-' 데이터 구조 (Node 또는 Rectangle로 표현)
-rectangle "Policy\n(NumPy Array)" as Policy_Data
-rectangle "Environment State\n& Dynamics (P)" as Env_Data
-note right of Env_Data
-  Includes P(s'|s,a)
-  and R(s,a,s')
-end note
-
-' 관계 정의
-' main 함수는 환경을 생성하고 다른 함수들을 호출하며 환경과 직접 상호작용 시연
-Main_Art --> GymLib : creates Env
-Main_Art --> GenPolicy_Art : calls
-Main_Art --> RunExp_Art : calls
-Main_Art --> DispPolicy_Art : calls
-Main_Art --> Env_Comp : interacts directly (step, render, get_wrapper_attr)
-
-' 환경 구성 요소
-Env_Comp --> Env_Data : manages
-
-' generate_random_policy 함수 관계
-GenPolicy_Art ..> NP_Comp : uses
-GenPolicy_Art --> Policy_Data : creates
-
-' run_one_experiment 함수 관계
-RunExp_Art ..> Env_Comp : uses
-RunExp_Art ..> Policy_Data : uses
-RunExp_Art ..> NP_Comp : uses (for stats)
-
-' display_policy 함수 관계
-DispPolicy_Art ..> Policy_Data : uses
-DispPolicy_Art ..> NP_Comp : uses (reshape)
-
-' 환경은 내부적으로 NumPy 사용
-Env_Comp ..> NP_Comp : uses (internal)
+Env_Comp ..> NP_Comp : uses internally [25]
+UserCode ..> NP_Comp : uses [26]
 
 @enduml

@@ -3,10 +3,10 @@ title: "CSC480_HW3"
 author: "MIN SONG"
 date: "2025-05-21"
 output:
-  html_document:
-    df_print: paged
   pdf_document:
     latex_engine: xelatex
+  html_document:
+    df_print: paged
 header-includes:
 - \usepackage{fontspec}
 - \setmainfont{Calibri}
@@ -23,10 +23,11 @@ library(ggplot2)
 set.seed(123)
 ```
 
-## Problem1
-### a.
-```{r 1-a}
-data <- read.csv("part1_policy_1.csv", header = TRUE, stringsAsFactors = TRUE)
+## Part1
+```{r part1-a}
+data <- read.csv("part1_policy_seed_7.csv", header = TRUE, stringsAsFactors = TRUE)
+#data <- read.csv("part_policy_1.csv", header = TRUE, stringsAsFactors = TRUE)
+#data <- read.csv("part_policy_1.csv", header = TRUE, stringsAsFactors = TRUE)
 
 # 데이터 확인 (선택 사항)
 # head(data)
@@ -46,28 +47,118 @@ mean_goal_steps <- if (length(valid_goal_steps) > 0) mean(valid_goal_steps) else
 # Python 코드에서 설정한 각 정책당 에피소드 수 (제목에 사용)
 num_episodes_per_policy <- 10000 # 이 값은 Python 코드와 일치해야 합니다.
 
-# 히스토그램 제목 생성
-# Figure 2 예시와 유사한 형식 사용
+# Assuming mean_goals, stdev_goals, mean_goal_steps, num_episodes_per_policy, nrow(data) are calculated [1, 4]
+
+# 히스토그램 제목 수정
+# mean_goals, stdev_goals는 Goals 통계, mean_goal_steps는 MeanGoalSteps 통계를 나타냄
 histogram_title <- sprintf(
-  "Density Histogram of Goals (out of %d Episodes) Across %d Policies\n[mean: %.2f, stdev: %.2f, mean#steps: %.2f]",
-  num_episodes_per_policy,
-  nrow(data), # 테스트된 정책 개수
-  mean_goals,
-  stdev_goals,
-  mean_goal_steps
+    # 제목을 'Mean Goal Steps의 밀도 히스토그램'으로 시작하고, 평가 조건과 통계치를 포함
+    "Part1. Density Histogram of Mean Goal Steps(Seed 7) \n[Goals Mean: %.2f, Goals Stdev: %.2f, Mean Goal Steps Mean: %.2f]",
+    mean_goals,              # Goals의 평균 [4]
+    stdev_goals,             # Goals의 표준 편차 [4]
+    mean_goal_steps          # MeanGoalSteps의 평균 [4]
 )
 
-# 히스토그램 그리기 (ggplot2 사용)
-# x축: Goals (목표 달성 횟수)
-# y축: density (밀도) - ..density.. 를 사용하여 y축을 밀도로 설정
-# binwidth 또는 bins를 조절하여 막대 개수 조절 가능 (여기서는 bins = 30으로 예시)
-ggplot(data, aes(x = MeanGoalSteps)) +
-  geom_histogram(aes(y = ..density..), bins = 30, fill = "skyblue", color = "black") +
-  labs(
-    title = histogram_title,
-    x = sprintf("Number of Episodes Reaching Goal (out of %d)", num_episodes_per_policy),
-    y = "Density"
-  ) +
-  theme_minimal() + # 깔끔한 테마 적용
-  theme(plot.title = element_text(hjust = 0.5)) # 제목 가운데 정렬
+# 히스토그램 플롯 생성
+ggplot(data, aes(x = MeanGoalSteps)) + # x축은 그대로 MeanGoalSteps 사용 [1]
+geom_histogram(aes(y = ..density..), bins = 30, fill = "skyblue", color = "black") + labs( # [2]
+    title = histogram_title, # 수정된 제목 사용 [2]
+    # x축 라벨을 '성공적인 에피소드당 평균 스텝 수'로 명확히 변경
+    x = sprintf("Mean Steps per Successful Episode (averaged over %d episodes)", num_episodes_per_policy),
+    y = "Density" # y축 라벨은 그대로 유지 [2]
+) + theme_minimal() + # 기존 테마 유지 [2]
+theme(plot.title = element_text(hjust = 0.5)) # 제목 중앙 정렬 유지 [2]
+```
+
+```{r part1-b}
+data <- read.csv("part1_policy_seed_3.csv", header = TRUE, stringsAsFactors = TRUE)
+#data <- read.csv("part_policy_1.csv", header = TRUE, stringsAsFactors = TRUE)
+#data <- read.csv("part_policy_1.csv", header = TRUE, stringsAsFactors = TRUE)
+
+# 데이터 확인 (선택 사항)
+# head(data)
+# summary(data)
+
+# 히스토그램 제목에 포함될 통계치 계산
+# Goals 열의 평균과 표준편차
+mean_goals <- mean(data$Goals)
+stdev_goals <- sd(data$Goals)
+
+# 목표 달성 시 평균 걸음 수의 평균
+# goals가 0보다 큰 정책들의 MeanGoalSteps만 사용하여 평균 계산
+# dplyr을 사용하면 더 간결하게 처리 가능: data %>% filter(Goals > 0) %>% summarize(mean_steps = mean(MeanGoalSteps))
+valid_goal_steps <- data$MeanGoalSteps[data$Goals > 0]
+mean_goal_steps <- if (length(valid_goal_steps) > 0) mean(valid_goal_steps) else 0
+
+# Python 코드에서 설정한 각 정책당 에피소드 수 (제목에 사용)
+num_episodes_per_policy <- 10000 # 이 값은 Python 코드와 일치해야 합니다.
+
+# Assuming mean_goals, stdev_goals, mean_goal_steps, num_episodes_per_policy, nrow(data) are calculated [1, 4]
+
+# 히스토그램 제목 수정
+# mean_goals, stdev_goals는 Goals 통계, mean_goal_steps는 MeanGoalSteps 통계를 나타냄
+histogram_title <- sprintf(
+    # 제목을 'Mean Goal Steps의 밀도 히스토그램'으로 시작하고, 평가 조건과 통계치를 포함
+    "Part1. Density Histogram of Mean Goal Steps(Seed 3) \n[Goals Mean: %.2f, Goals Stdev: %.2f, Mean Goal Steps Mean: %.2f]",
+    mean_goals,              # Goals의 평균 [4]
+    stdev_goals,             # Goals의 표준 편차 [4]
+    mean_goal_steps          # MeanGoalSteps의 평균 [4]
+)
+
+# 히스토그램 플롯 생성
+ggplot(data, aes(x = MeanGoalSteps)) + # x축은 그대로 MeanGoalSteps 사용 [1]
+geom_histogram(aes(y = ..density..), bins = 30, fill = "skyblue", color = "black") + labs( # [2]
+    title = histogram_title, # 수정된 제목 사용 [2]
+    # x축 라벨을 '성공적인 에피소드당 평균 스텝 수'로 명확히 변경
+    x = sprintf("Mean Steps per Successful Episode (averaged over %d episodes)", num_episodes_per_policy),
+    y = "Density" # y축 라벨은 그대로 유지 [2]
+) + theme_minimal() + # 기존 테마 유지 [2]
+theme(plot.title = element_text(hjust = 0.5)) # 제목 중앙 정렬 유지 [2]
+```
+
+## Part2
+```{r part2}
+data <- read.csv("part2_optimal_policy.csv", header = TRUE, stringsAsFactors = TRUE)
+#data <- read.csv("part_policy_1.csv", header = TRUE, stringsAsFactors = TRUE)
+#data <- read.csv("part_policy_1.csv", header = TRUE, stringsAsFactors = TRUE)
+
+# 데이터 확인 (선택 사항)
+# head(data)
+# summary(data)
+
+# 히스토그램 제목에 포함될 통계치 계산
+# Goals 열의 평균과 표준편차
+mean_goals <- mean(data$Goals)
+stdev_goals <- sd(data$Goals)
+
+# 목표 달성 시 평균 걸음 수의 평균
+# goals가 0보다 큰 정책들의 MeanGoalSteps만 사용하여 평균 계산
+# dplyr을 사용하면 더 간결하게 처리 가능: data %>% filter(Goals > 0) %>% summarize(mean_steps = mean(MeanGoalSteps))
+valid_goal_steps <- data$MeanGoalSteps[data$Goals > 0]
+mean_goal_steps <- if (length(valid_goal_steps) > 0) mean(valid_goal_steps) else 0
+
+# Python 코드에서 설정한 각 정책당 에피소드 수 (제목에 사용)
+num_episodes_per_policy <- 10000 # 이 값은 Python 코드와 일치해야 합니다.
+
+# Assuming mean_goals, stdev_goals, mean_goal_steps, num_episodes_per_policy, nrow(data) are calculated [1, 4]
+
+# 히스토그램 제목 수정
+# mean_goals, stdev_goals는 Goals 통계, mean_goal_steps는 MeanGoalSteps 통계를 나타냄
+histogram_title <- sprintf(
+    # 제목을 'Mean Goal Steps의 밀도 히스토그램'으로 시작하고, 평가 조건과 통계치를 포함
+    "Part2. Density Histogram of Mean Goal Steps \n[Goals Mean: %.2f, Goals Stdev: %.2f, Mean Goal Steps Mean: %.2f]",
+    mean_goals,              # Goals의 평균 [4]
+    stdev_goals,             # Goals의 표준 편차 [4]
+    mean_goal_steps          # MeanGoalSteps의 평균 [4]
+)
+
+# 히스토그램 플롯 생성
+ggplot(data, aes(x = MeanGoalSteps)) + # x축은 그대로 MeanGoalSteps 사용 [1]
+geom_histogram(aes(y = ..density..), bins = 30, fill = "skyblue", color = "black") + labs( # [2]
+    title = histogram_title, # 수정된 제목 사용 [2]
+    # x축 라벨을 '성공적인 에피소드당 평균 스텝 수'로 명확히 변경
+    x = sprintf("Mean Steps per Successful Episode (averaged over %d episodes)", num_episodes_per_policy),
+    y = "Density" # y축 라벨은 그대로 유지 [2]
+) + theme_minimal() + # 기존 테마 유지 [2]
+theme(plot.title = element_text(hjust = 0.5)) # 제목 중앙 정렬 유지 [2]
 ```
