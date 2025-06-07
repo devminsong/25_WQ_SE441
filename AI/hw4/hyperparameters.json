@@ -3,7 +3,7 @@
 	"hyperparameters": {
 		"cross_validation": {
 			"decision_tree": {
-				"max_depth": 4,
+				"max_depth": 8,
 				"criterion": "gini"
 			},
 			"random_forest": {
@@ -31,16 +31,16 @@
 		},
 		"training": {
 			"decision_tree": {
-				"max_depth": null,
-				"criterion": "entropy"
+				"max_depth": 4,
+				"criterion": "gini"
 			},
 			"random_forest": {
-				"n_trees": 5,
-				"max_depth": 5
+				"n_trees": 100,
+				"max_depth": 6
 			},
 			"logistic_classifier": {
-				"penalty": null,
-				"C": 1.0
+				"penalty": "l2",
+				"C": 4.0
 			}
 		}
 	}	

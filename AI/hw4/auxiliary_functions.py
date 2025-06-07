@@ -43,27 +43,27 @@ def load_hyperparameters(config_filename: str, stage: str) -> Tuple[str, Dict]:
         return "[Invalid Classifier Name]", {}
     
     # TODO: 2) find the active classifier
-    active_classifier_name = config_data.get("active_classifier", "[Invalid Classifier Name]")
-    if active_classifier_name == "[Invalid Classifier Name]":
-        print(f"{active_classifier_name} == [Invalid Classifier Name]")
-        return active_classifier_name, {}
+    classifier_name = config_data.get("active_classifier", "[Invalid Classifier Name]")
+    if classifier_name == "[Invalid Classifier Name]":
+        print(f"{classifier_name} == [Invalid Classifier Name]")
+        return classifier_name, {}
     
     # TODO: 3) return the hyperparameters for the selected stage and classifier
-    hyperparameters_section = config_data.get("hyperparameters", None)
-    if hyperparameters_section is None:
-        print("hyperparameters_section is None.")
-        return active_classifier_name, {}
+    temp1 = config_data.get("hyperparameters", None)
+    if temp1 is None:
+        print("temp1 is None.")
+        return classifier_name, {}
     
-    stage_hyperparameters = hyperparameters_section.get(stage, None)
-    if stage_hyperparameters is None:
-        print("stage_hyperparameters is None.")
-        return active_classifier_name, {}
+    temp2 = temp1.get(stage, None)
+    if temp2 is None:
+        print("temp2 is None.")
+        return classifier_name, {}
     
-    classifier_hyperparameters = stage_hyperparameters.get(active_classifier_name, {})
-    if not classifier_hyperparameters:
-        print("not classifier_hyperparameters.")
+    hyperparameters = temp2.get(classifier_name, {})
+    if not hyperparameters:
+        print("not hyperparameters.")
 
-    return active_classifier_name, classifier_hyperparameters
+    return classifier_name, hyperparameters
 
 
 # =========================================================================
@@ -210,24 +210,7 @@ def apply_normalization(raw_dataset: np.ndarray, scaler: StandardScaler | None) 
 #   as provided by the ndarray class of numpy
 # =========================================================================
 def split_dataset(dataset_X: np.ndarray, dataset_Y: np.ndarray, n: int) -> List[Tuple[np.ndarray, np.ndarray]]:
-    # TODO 1) create a copy of the dataset
-
-    # TODO 2) shuffle the copy of the dataset
-    # TODO:  2.1) create random order for all elements (Check: np.random.shuffle)
-    # TODO:  2.2) apply this random order to X
-    #  (Check: advanced indexing: https://numpy.org/doc/stable/user/basics.indexing.html)
-    # TODO:  2.3) apply this random order to Y
-    #  (Check: advanced indexing: https://numpy.org/doc/stable/user/basics.indexing.html)
-
-    # TODO: 3) compute partition sizes
-
-    # TODO: 4) compute the partitions using the SHUFFLED COPY
-    #          also, don't forget to split both x and y
-
-    # TODO: 5) return the partitions of the SHUFFLED COPY
-    # return []
-
-    # TODO 1) create a copy of the dataset
+     # TODO 1) create a copy of the dataset
     # NumPy의 고급 인덱싱은 이 경우 새로운 배열(복사본)을 반환하므로, 명시적인 .copy() 호출은 필요하지 않습니다.
     total_examples = len(dataset_X)
 
@@ -242,8 +225,9 @@ def split_dataset(dataset_X: np.ndarray, dataset_Y: np.ndarray, n: int) -> List[
     np.random.shuffle(indices)
 
     # TODO: 2.2) apply this random order to X
-    # TODO: 2.3) apply this random order to Y
     shuffled_X = dataset_X[indices]
+
+    # TODO: 2.3) apply this random order to Y
     shuffled_Y = dataset_Y[indices]
 
     # TODO: 3) compute partition sizes
@@ -318,3 +302,23 @@ def train_classifier(classifier_name: str, hyper_params: dict, train_split_X: np
 
     # TODO: 3) Return the trained classifier
     return classifier
+
+def print_metrics(report):
+    print(f"  Accuracy: {report['accuracy']:.4f}") 
+    print(f"  Macro Avg Precision: {report['macro avg']['precision']:.4f}")
+    print(f"  Macro Avg Recall: {report['macro avg']['recall']:.4f}") 
+    print(f"  Macro Avg F1-Score: {report['macro avg']['f1-score']:.4f}") 
+    print(f"  Weighted Avg Precision: {report['weighted avg']['precision']:.4f}")
+    print(f"  Weighted Avg Recall: {report['weighted avg']['recall']:.4f}")
+    print(f"  Weighted Avg F1-Score: {report['weighted avg']['f1-score']:.4f}")
+    print(f"  Java Class Metrics:")
+    print(f"    Precision: {report['java']['precision']:.4f}")
+    print(f"    Recall: {report['java']['recall']:.4f}")
+    print(f"    F1-Score: {report['java']['f1-score']:.4f}")
+    print(f"    Support: {report['java']['support']}")
+    print(f"  Python Class Metrics:")
+    print(f"    Precision: {report['python']['precision']:.4f}")
+    print(f"    Recall: {report['python']['recall']:.4f}")
+    print(f"    F1-Score: {report['python']['f1-score']:.4f}")
+    print(f"    Support: {report['python']['support']}")
+    

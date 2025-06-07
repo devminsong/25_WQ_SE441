@@ -83,9 +83,7 @@ def cross_validation(raw_x: np.ndarray, raw_y: np.ndarray, n_folds: int, classif
     validation_reports = []
 
     # TODO: 2) for each split ...
-    for i in range(n_folds):
-        # i번째 폴드를 검증 세트로 사용하고, 나머지 폴드를 훈련 세트로 사용합니다.
-       
+    for i in range(n_folds):       
         # 2.1) prepare the split training dataset (concatenate and normalize)
         raw_train_data_Xs = []
         raw_train_data_Ys = []
@@ -94,57 +92,37 @@ def cross_validation(raw_x: np.ndarray, raw_y: np.ndarray, n_folds: int, classif
             if i == j:
                 continue
             
-            # 훈련 세트가 될 다른 폴드들의 X와 Y 데이터를 각각의 리스트에 추가합니다.
-            raw_train_data_Xs.append(partitions[j][0]) # X 데이터만 추가
-            raw_train_data_Ys.append(partitions[j][1]) # Y 데이터만 추가
+            raw_train_data_Xs.append(partitions[j][0])
+            raw_train_data_Ys.append(partitions[j][1])
 
-        # 이제 train_splits_X_for_concat은 NumPy 배열들의 리스트이므로, concatenate가 가능합니다.
         concatenated_train_data_Xs = np.concatenate(raw_train_data_Xs, axis=0)
         concatenated_train_data_Ys = np.concatenate(raw_train_data_Ys, axis=0)
 
-        # 2.1) prepare the split training dataset (normalize)
-        # 훈련 데이터셋을 정규화합니다. 정규화 파라미터는 해당 훈련 세트에서 학습됩니다 [4, 9].
-        # NOTE: auxiliary_functions.py의 apply_normalization 함수는 현재 TODO 상태입니다 [10, 11].
-        # 이 함수가 StandardScaler를 사용하여 훈련 데이터에 fit하고 transform한 후
-        # 학습된 scaler 객체를 반환하도록 구현되어야 합니다.
         normalized_train_data_X, scaler = apply_normalization(concatenated_train_data_Xs, None)
-        normalized_train_data_Y = concatenated_train_data_Ys # Y는 정규화할 필요가 없습니다.
+        normalized_train_data_Y = concatenated_train_data_Ys
 
         # 2.2) prepare the split validation dataset (normalize)
-        # partitions[i]는 (validation_X, validation_Y) 튜플입니다.
-        raw_validation_data_X = partitions[i][0] # 튜플의 첫 번째 요소 (X 데이터)
-        raw_validation_data_Y = partitions[i][1] # 튜플의 두 번째 요소 (Y 데이터)
+        raw_validation_data_X = partitions[i][0]
+        raw_validation_data_Y = partitions[i][1]
         
-        # 2.2) prepare the split validation dataset (normalize)
-        # 검증 데이터셋을 정규화합니다. 이때, 훈련 세트에서 학습된 동일한 정규화 파라미터를 사용합니다 [4, 9].
         normalized_validation_data_X, _ = apply_normalization(raw_validation_data_X, scaler)
-        normalized_validation_data_Y = raw_validation_data_Y # Y는 정규화할 필요가 없습니다.
+        normalized_validation_data_Y = raw_validation_data_Y
 
         # 2.3) train your classifier on the training split
-        # 정규화된 훈련 데이터로 분류기를 훈련합니다 [5].
-        # NOTE: auxiliary_functions.py의 train_classifier 함수는 현재 TODO 상태입니다 [12].
-        # 이 함수가 지정된 하이퍼파라미터로 분류기 객체를 생성하고 훈련한 후,
-        # 훈련된 분류기 객체를 반환하도록 구현되어야 합니다 [13].
         classifier = train_classifier(classifier_name, hyper_params, normalized_train_data_X, normalized_train_data_Y)
 
-        # train_classifier가 None을 반환하는 경우를 대비한 안전장치
         if classifier is None:
-            raise ValueError(f"train_classifier 함수가 None을 반환했습니다. {classifier_name} 분류기 구현을 확인해주세요.")
+            raise ValueError(f"classifier is None: {classifier_name}")
 
         # 2.4) evaluate your classifier on the training split (compute and print metrics)
-        # 훈련된 분류기로 훈련 세트에 대한 예측을 수행하고 메트릭을 계산합니다 [5].
         train_predictions = classifier.predict(normalized_train_data_X)
-        # Scikit-Learn의 classification_report를 사용하여 메트릭을 딕셔너리 형태로 얻습니다 [1, 2].
-        # zero_division=0을 사용하여 0으로 나눌 때 발생하는 경고를 방지하고 메트릭을 0.0으로 설정합니다.
         train_report = classification_report(normalized_train_data_Y, train_predictions, output_dict=True, zero_division=0, target_names=['java', 'python'])
 
         # 2.5) evaluate your classifier on the validation split (compute and print metrics)
-        # 훈련된 분류기로 검증 세트에 대한 예측을 수행하고 메트릭을 계산합니다 [5].
         validation_predictions = classifier.predict(normalized_validation_data_X)
         validation_report = classification_report(normalized_validation_data_Y, validation_predictions, output_dict=True, zero_division=0, target_names=['java', 'python'])
 
-        # 2.6) collect your metrics (위에서 리스트에 추가함으로써 이미 수집되었습니다) [5]
-        print('### ', train_report)
+        # 2.6) collect your metrics
         train_reports.append(train_report)
         validation_reports.append(validation_report)
         
@@ -168,170 +146,28 @@ def cross_validation(raw_x: np.ndarray, raw_y: np.ndarray, n_folds: int, classif
         }
     }
 
-    # # "java", "python", "macro avg", "weighted avg" 카테고리에 대해 평균 메트릭을 계산합니다.
-    # metric_categories_to_average = ["java", "python", "macro avg", "weighted avg"]
-    # metric_types_to_average = ["precision", "recall", "f1-score"]
-
     for data_type in ["train", "validation"]:
         reports = train_reports if data_type == "train" else validation_reports
         
-        # 정확도를 평균합니다.
         final_metrics[data_type]["accuracy"] = np.mean([report.get("accuracy", 0.0) for report in reports])
 
         # 각 클래스 및 매크로/가중 평균에 대해 precision, recall, f1-score를 평균하고 support는 합산합니다.
         for category in ["java", "python", "macro avg", "weighted avg"]:
             for metric_type in ["precision", "recall", "f1-score"]:
-                # 해당 메트릭 타입에 대한 모든 폴드의 값을 수집합니다.
-                # `get(category, {})`를 사용하여 키가 없을 때 오류 방지
-                # `get(metric_type, 0.0)`를 사용하여 메트릭 타입이 없을 때 기본값 0.0 설정
                 values = [report.get(category, {}).get(metric_type, 0.0) for report in reports if report.get(category) is not None]
-                if values: # 값이 존재하면 평균 계산
+                if values:
                     final_metrics[data_type][category][metric_type] = np.mean(values)
-                else: # 값이 없으면 0.0 유지
+                else:
                     final_metrics[data_type][category][metric_type] = 0.0
 
-            # support는 각 폴드의 값을 합산합니다.
-            # Grid Search 보고서 테이블 [14-17]에는 support 필드가 없지만,
-            # 내부적으로는 필요할 수 있어 합산을 유지하되, 필요 없으면 제거할 수 있습니다.
-            # 여기서는 initial_metrics 템플릿에 support가 0.0으로 명시되어 있으므로,
-            # 해당 값을 각 폴드의 support 값을 합산한 것으로 업데이트합니다.
-            # `classification_report`의 `macro avg` 및 `weighted avg`의 support는 전체 샘플 수입니다.
             if category == "macro avg" or category == "weighted avg":
                 final_metrics[data_type][category]["support"] = sum(report.get(category, {}).get("support", 0) for report in reports)
-            else: # 개별 클래스의 support는 해당 클래스의 총 인스턴스 수를 나타냅니다.
+            else:
                 final_metrics[data_type][category]["support"] = sum(report.get(category, {}).get("support", 0) for report in reports)
 
     # TODO: 4) return your metrics
     return final_metrics
 
-# def cross_validation(raw_x: np.ndarray, raw_y: np.ndarray, n_folds: int, classifier_name: str, hyper_params: Dict) -> Dict:
-#     # TODO: 1) split the dataset
-#     partitions = split_dataset(raw_x, raw_y, n_folds)
-
-#     # 변수명 수정: 실제로 사용되는 변수명과 일치시킴
-#     train_metrics_per_fold = []
-#     val_metrics_per_fold = []
-
-#     # TODO: 2) for each split ...
-#     for i in range(n_folds):
-#         # i번째 폴드를 검증 세트로 사용하고, 나머지 폴드를 훈련 세트로 사용합니다.
-        
-#         # 2.2) prepare the split validation dataset (normalize)
-#         # partitions[i]는 (validation_X, validation_Y) 튜플입니다.
-#         validation_split_X_raw = partitions[i][0] # 튜플의 첫 번째 요소 (X 데이터)
-#         validation_split_Y_raw = partitions[i][1] # 튜플의 두 번째 요소 (Y 데이터)
-
-#         # 2.1) prepare the split training dataset (concatenate and normalize)
-#         train_splits_X_for_concat = []
-#         train_splits_Y_for_concat = []
-
-#         for j in range(n_folds):
-#             if i == j: # 현재 i번째 폴드는 검증 세트이므로 훈련 세트에서는 제외합니다.
-#                 continue
-            
-#             # 훈련 세트가 될 다른 폴드들의 X와 Y 데이터를 각각의 리스트에 추가합니다.
-#             train_splits_X_for_concat.append(partitions[j][0]) # X 데이터만 추가
-#             train_splits_Y_for_concat.append(partitions[j][1]) # Y 데이터만 추가
-
-#         # 이제 train_splits_X_for_concat은 NumPy 배열들의 리스트이므로, concatenate가 가능합니다.
-#         train_split_X_concat = np.concatenate(train_splits_X_for_concat, axis=0)
-#         train_split_Y_concat = np.concatenate(train_splits_Y_for_concat, axis=0)
-
-#         # 2.1) prepare the split training dataset (normalize)
-#         # 훈련 데이터셋을 정규화합니다. 정규화 파라미터는 해당 훈련 세트에서 학습됩니다 [4, 9].
-#         # NOTE: auxiliary_functions.py의 apply_normalization 함수는 현재 TODO 상태입니다 [10, 11].
-#         # 이 함수가 StandardScaler를 사용하여 훈련 데이터에 fit하고 transform한 후
-#         # 학습된 scaler 객체를 반환하도록 구현되어야 합니다.
-#         normalized_train_X, scaler = apply_normalization(train_split_X_concat, None)
-#         normalized_train_Y = train_split_Y_concat # Y는 정규화할 필요가 없습니다.
-
-#         # 2.2) prepare the split validation dataset (normalize)
-#         # 검증 데이터셋을 정규화합니다. 이때, 훈련 세트에서 학습된 동일한 정규화 파라미터를 사용합니다 [4, 9].
-#         normalized_val_X, _ = apply_normalization(validation_split_X_raw, scaler)
-#         normalized_val_Y = validation_split_Y_raw # Y는 정규화할 필요가 없습니다.
-
-#         # 2.3) train your classifier on the training split
-#         # 정규화된 훈련 데이터로 분류기를 훈련합니다 [5].
-#         # NOTE: auxiliary_functions.py의 train_classifier 함수는 현재 TODO 상태입니다 [12].
-#         # 이 함수가 지정된 하이퍼파라미터로 분류기 객체를 생성하고 훈련한 후,
-#         # 훈련된 분류기 객체를 반환하도록 구현되어야 합니다 [13].
-#         trained_classifier = train_classifier(classifier_name, hyper_params, normalized_train_X, normalized_train_Y)
-
-#         # train_classifier가 None을 반환하는 경우를 대비한 안전장치
-#         if trained_classifier is None:
-#             raise ValueError(f"train_classifier 함수가 None을 반환했습니다. {classifier_name} 분류기 구현을 확인해주세요.")
-
-#         # 2.4) evaluate your classifier on the training split (compute and print metrics)
-#         # 훈련된 분류기로 훈련 세트에 대한 예측을 수행하고 메트릭을 계산합니다 [5].
-#         train_predictions = trained_classifier.predict(normalized_train_X)
-#         # Scikit-Learn의 classification_report를 사용하여 메트릭을 딕셔너리 형태로 얻습니다 [1, 2].
-#         # zero_division=0을 사용하여 0으로 나눌 때 발생하는 경고를 방지하고 메트릭을 0.0으로 설정합니다.
-#         train_report = classification_report(normalized_train_Y, train_predictions, output_dict=True, zero_division=0, target_names=['java', 'python'])
-#         train_metrics_per_fold.append(train_report)
-
-#         # 2.5) evaluate your classifier on the validation split (compute and print metrics)
-#         # 훈련된 분류기로 검증 세트에 대한 예측을 수행하고 메트릭을 계산합니다 [5].
-#         val_predictions = trained_classifier.predict(normalized_val_X)
-#         val_report = classification_report(normalized_val_Y, val_predictions, output_dict=True, zero_division=0, target_names=['java', 'python'])
-#         val_metrics_per_fold.append(val_report)
-
-#         # 2.6) collect your metrics (위에서 리스트에 추가함으로써 이미 수집되었습니다) [5]
-        
-#     # TODO: 3) compute the averaged metrics
-#     #          5.1) compute and print training metrics
-#     #          5.2) compute and print validation metrics
-#     final_metrics = {
-#         "train": {
-#            "java": {"precision": None, "recall": None, "f1-score": None, "support": None},
-#            "python": {"precision": None, "recall": None, "f1-score": None, "support": None},
-#            "accuracy": None,
-#            "macro avg": {"precision": None, "recall": None, "f1-score": None, "support": None},
-#            "weighted avg": {"precision": None, "recall": None, "f1-score": None, "support": None}
-#         },
-#         "validation": {
-#             "java": {"precision": None, "recall": None, "f1-score": None, "support": None},
-#             "python": {"precision": None, "recall": None, "f1-score": None, "support": None},
-#             "accuracy": None,
-#             "macro avg": {"precision": None, "recall": None, "f1-score": None, "support": None},
-#             "weighted avg": {"precision": None, "recall": None, "f1-score": None, "support": None}
-#         }
-#     }
-
-#     # "java", "python", "macro avg", "weighted avg" 카테고리에 대해 평균 메트릭을 계산합니다.
-#     metric_categories_to_average = ["java", "python", "macro avg", "weighted avg"]
-#     metric_types_to_average = ["precision", "recall", "f1-score"]
-
-#     for data_type in ["train", "validation"]:
-#         metrics_list = train_metrics_per_fold if data_type == "train" else val_metrics_per_fold
-        
-#         # 정확도를 평균합니다.
-#         final_metrics[data_type]["accuracy"] = np.mean([m.get("accuracy", 0.0) for m in metrics_list])
-
-#         # 각 클래스 및 매크로/가중 평균에 대해 precision, recall, f1-score를 평균하고 support는 합산합니다.
-#         for category in metric_categories_to_average:
-#             for metric_type in metric_types_to_average:
-#                 # 해당 메트릭 타입에 대한 모든 폴드의 값을 수집합니다.
-#                 # `get(category, {})`를 사용하여 키가 없을 때 오류 방지
-#                 # `get(metric_type, 0.0)`를 사용하여 메트릭 타입이 없을 때 기본값 0.0 설정
-#                 values = [m.get(category, {}).get(metric_type, 0.0) for m in metrics_list if m.get(category) is not None]
-#                 if values: # 값이 존재하면 평균 계산
-#                     final_metrics[data_type][category][metric_type] = np.mean(values)
-#                 else: # 값이 없으면 0.0 유지
-#                     final_metrics[data_type][category][metric_type] = 0.0
-
-#             # support는 각 폴드의 값을 합산합니다.
-#             # Grid Search 보고서 테이블 [14-17]에는 support 필드가 없지만,
-#             # 내부적으로는 필요할 수 있어 합산을 유지하되, 필요 없으면 제거할 수 있습니다.
-#             # 여기서는 initial_metrics 템플릿에 support가 0.0으로 명시되어 있으므로,
-#             # 해당 값을 각 폴드의 support 값을 합산한 것으로 업데이트합니다.
-#             # `classification_report`의 `macro avg` 및 `weighted avg`의 support는 전체 샘플 수입니다.
-#             if category == "macro avg" or category == "weighted avg":
-#                 final_metrics[data_type][category]["support"] = sum(m.get(category, {}).get("support", 0) for m in metrics_list)
-#             else: # 개별 클래스의 support는 해당 클래스의 총 인스턴스 수를 나타냅니다.
-#                 final_metrics[data_type][category]["support"] = sum(m.get(category, {}).get("support", 0) for m in metrics_list)
-
-#     # TODO: 4) return your metrics
-#     return final_metrics
 
 def main():
     if len(sys.argv) < 4:
@@ -352,27 +188,26 @@ def main():
         return
 
     # TODO: 1) Load your (cross-validation) hyper-parameters
-    # 'cross_validation' 단계의 하이퍼파라미터를 로드합니다 [1, 2].
-    # load_hyperparameters 함수는 보조 함수로, `auxiliary_functions.py`에 정의되어 있습니다 [12].
     classifier_name, hyper_params = load_hyperparameters(in_config_filename, "cross_validation") 
     
-    # 로드된 하이퍼파라미터를 확인하는 간단한 출력 (옵션)
-    print(f"Active Classifier: {classifier_name}")
-    print(f"Hyperparameters for cross_validation: {hyper_params}")
+    print(f"Current Classifier: {classifier_name}")
+    print(f"Hyperparameters: {hyper_params}")
 
     # TODO: 2) Load your data
     raw_x, raw_y = load_raw_dataset(in_raw_data_filename)
-    # 데이터 로드 후 raw_x와 raw_y의 형태를 확인하여 제대로 로드되었는지 검증할 수 있습니다.
-    print(f"Loaded X shape: {raw_x.shape}")
-    print(f"Loaded Y shape: {raw_y.shape}")
+    print(f"raw_x: {raw_x.shape}")
+    print(f"raw_y: {raw_y.shape}")
 
     # TODO: 3) Run cross-validation  
+    print("\n=== Running Cross-Validation ===")
     final_metrics = cross_validation(raw_x, raw_y, n_folds, classifier_name, hyper_params)
-    # 결과 확인을 위해 final_metrics 출력
+
     print("Cross-validation final metrics:")
     for metric_name, value in final_metrics.items():
-        print(f"  {metric_name}: {value}")
+        print(f"{metric_name}: {value}")
+
     # FINISHED!
+    print("\n=== FINISHED ===")
 
 
 if __name__ == "__main__":
